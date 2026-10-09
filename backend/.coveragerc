@@ -1,0 +1,8 @@
+# 覆盖率豁免说明：
+# - stt/tts：语音外设适配层（vosk 模型 2GB / edge-tts 需外网），单测以路由层 mock 覆盖
+# - vector：chroma 首次初始化需下载 ONNX 嵌入模型，测试用 FakeVector 替代其协议
+[run]
+omit =
+    app/services/stt.py
+    app/services/tts.py
+    app/db/vector.py

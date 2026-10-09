@@ -7,6 +7,7 @@ from sqlalchemy.orm import Session
 from app.api.deps import get_llm_dep, get_memory_dep
 from app.api.schemas import ChatReply, ChatRequest
 from app.db.database import get_db
+from app.providers.llm import LLMError
 from app.services import chat as chat_service
 
 router = APIRouter(prefix="/api/chat", tags=["chat"])
