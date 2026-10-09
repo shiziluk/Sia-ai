@@ -24,6 +24,8 @@
   --system-bg: #f6e7ee;
   --sprite-ring: linear-gradient(135deg, #f8bbd0, #e91e63, #7c4dff);
   --shadow: 0 6px 18px rgba(233, 30, 99, 0.08);
+  /* 舞台玻璃面板（全屏立绘上的对话框/HUD） */
+  --stage-glass: rgba(255, 255, 255, 0.6);
 }
 
 html.night {
@@ -47,6 +49,19 @@ html.night {
   --system-bg: #2b2540;
   --sprite-ring: linear-gradient(135deg, #7c4dff, #f06292, #4dd0e1);
   --shadow: 0 6px 18px rgba(0, 0, 0, 0.35);
+  /* 舞台玻璃面板（全屏立绘上的对话框/HUD，夜间更深保证可读） */
+  --stage-glass: rgba(30, 25, 42, 0.72);
+}
+
+/* ---- 无障碍：用户偏好减弱动效时全局收敛动画 ---- */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
 }
 
 * {

@@ -5,13 +5,13 @@ const router = createRouter({
   routes: [
     {
       path: '/',
-      name: 'chat',
-      component: () => import('@/views/ChatView.vue')
+      name: 'stage',
+      component: () => import('@/views/StageView.vue')
     },
     {
+      // 旧版设置页入口（PWA 缓存/收藏夹）重定向回舞台，防止 404
       path: '/settings',
-      name: 'settings',
-      component: () => import('@/views/SettingsView.vue')
+      redirect: '/'
     }
   ]
 })
