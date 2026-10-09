@@ -1,0 +1,153 @@
+/* ============================================
+   希亚 - 全局样式与双主题 CSS 变量
+   日间：粉白温馨；夜间：深灰紫暗色
+   ============================================ */
+
+:root {
+  /* 日间主题 */
+  --bg: #fff5f8;
+  --bg-gradient: linear-gradient(160deg, #ffe9f1 0%, #fdf3f7 50%, #eef2ff 100%);
+  --card: #ffffff;
+  --card-soft: #fdf2f7;
+  --panel-bg: rgba(255, 255, 255, 0.78);
+  --text: #402a3c;
+  --text-soft: #9a7f95;
+  --primary: #e91e63;
+  --primary-soft-bg: rgba(233, 30, 99, 0.08);
+  --accent: #7c4dff;
+  --border: #f5d9e5;
+  --bubble-user: linear-gradient(135deg, #f472a6, #e91e63);
+  --bubble-user-text: #ffffff;
+  --bubble-bot: #ffffff;
+  --bar-bg: #f7dce7;
+  --bar-fill: linear-gradient(90deg, #f06292, #e91e63);
+  --system-bg: #f6e7ee;
+  --sprite-ring: linear-gradient(135deg, #f8bbd0, #e91e63, #7c4dff);
+  --shadow: 0 6px 18px rgba(233, 30, 99, 0.08);
+}
+
+html.night {
+  /* 夜间主题 */
+  --bg: #14111c;
+  --bg-gradient: linear-gradient(160deg, #171321 0%, #1d1728 55%, #191423 100%);
+  --card: #241f31;
+  --card-soft: #2b2540;
+  --panel-bg: rgba(30, 25, 42, 0.85);
+  --text: #ece5f4;
+  --text-soft: #a294b8;
+  --primary: #f06292;
+  --primary-soft-bg: rgba(240, 98, 146, 0.14);
+  --accent: #b39ddb;
+  --border: #3a3250;
+  --bubble-user: linear-gradient(135deg, #c2185b, #ad1457);
+  --bubble-user-text: #ffffff;
+  --bubble-bot: #2a2438;
+  --bar-bg: #382e4d;
+  --bar-fill: linear-gradient(90deg, #ba6bb0, #f06292);
+  --system-bg: #2b2540;
+  --sprite-ring: linear-gradient(135deg, #7c4dff, #f06292, #4dd0e1);
+  --shadow: 0 6px 18px rgba(0, 0, 0, 0.35);
+}
+
+* {
+  box-sizing: border-box;
+}
+
+html,
+body,
+#app {
+  height: 100%;
+}
+
+body {
+  margin: 0;
+  font-family:
+    'PingFang SC',
+    'Microsoft YaHei',
+    'Noto Sans SC',
+    system-ui,
+    -apple-system,
+    sans-serif;
+  background: var(--bg-gradient) fixed;
+  color: var(--text);
+  -webkit-font-smoothing: antialiased;
+}
+
+/* ---- 通用面板（侧边栏卡片） ---- */
+.panel {
+  background: var(--card);
+  border: 1px solid var(--border);
+  border-radius: 18px;
+  padding: 14px;
+  box-shadow: var(--shadow);
+}
+
+.panel-title {
+  margin: 0 0 10px;
+  font-size: 13.5px;
+  font-weight: 600;
+  color: var(--text);
+}
+
+.panel-empty {
+  margin: 4px 0 0;
+  font-size: 12.5px;
+  color: var(--text-soft);
+  line-height: 1.6;
+}
+
+/* ---- 通用输入框与按钮 ---- */
+.input {
+  padding: 8px 10px;
+  border-radius: 12px;
+  border: 1px solid var(--border);
+  background: var(--card);
+  color: var(--text);
+  font-size: 13px;
+  font-family: inherit;
+  outline: none;
+}
+
+.input:focus {
+  border-color: var(--primary);
+}
+
+.btn {
+  padding: 8px 16px;
+  border-radius: 999px;
+  border: none;
+  font-size: 13px;
+  font-family: inherit;
+  cursor: pointer;
+  transition: opacity 0.15s ease;
+}
+
+.btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.btn--primary {
+  background: var(--primary);
+  color: #fff;
+  font-weight: 600;
+}
+
+.btn--primary:hover:not(:disabled) {
+  opacity: 0.88;
+}
+
+/* ---- 滚动条美化 ---- */
+::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+
+::-webkit-scrollbar-thumb {
+  background: var(--border);
+  border-radius: 999px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: var(--primary);
+}

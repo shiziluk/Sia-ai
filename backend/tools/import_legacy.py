@@ -60,37 +60,59 @@ def import_chat_history(db) -> None:
 
 
 def import_personality_state(db) -> None:
-    """personality_state.json → personality_state 表（仅当表为空）。"""
-    if db.get(PersonalityState, 1) is not None:
-        print("personality_state 已存在，跳过")
-        return
+    """personality_state.json → personality_state 表。
+
+    留档 trust=25/level=2 是真实数据；若表里已存在行（如服务冒烟时自动建的
+    默认空行 trust=0/level=1），仅在其未被真实对话更新过时用留档覆盖。
+    """
     src = LEGACY_DIR / "personality_state.json"
-    trust, level = 0, 1
-    if src.exists():
-        data = json.loads(src.read_text(encoding="utf-8"))
-        trust = int(data.get("trust", 0))
-        level = int(data.get("intimacy_level", 1))
-    db.add(PersonalityState(id=1, trust=trust, intimacy_level=level))
-    db.commit()
-    print(f"人格状态导入完成: trust={trust}, intimacy={level}")
+    if not src.exists():
+        print("未找到 personality_state.json，跳过")
+        return
+    data = json.loads(src.read_text(encoding="utf-8"))
+    trust = int(data.get("trust", 0))
+    level = int(data.get("intimacy_level", 1))
+
+    existing = db.get(PersonalityState, 1)
+    if existing is None:
+        db.add(PersonalityState(id=1, trust=trust, intimacy_level=level))
+        db.commit()
+        print(f"人格状态导入完成: trust={trust}, intimacy={level}")
+        return
+    if existing.trust == 0 and existing.intimacy_level == 1:
+        existing.trust = trust
+        existing.intimacy_level = level
+        db.commit()
+        print(f"人格状态已从留档覆盖: trust={trust}, intimacy={level}")
+    else:
+        print("personality_state 已有真实数据，跳过")
 
 
 def import_vector_memory() -> None:
-    """旧 chroma memory_db → 新 chroma 记忆库（按文本去重）。"""
+    """旧 chroma memory_db → 新 chroma 记忆库（按文本去重）。
+
+    旧库是 chroma 0.4.x 格式，新版客户端 get_collection 会报 '_type' 错，
+    因此直接用 sqlite3 读 embedding_metadata 里的文档文本（跨版本稳定）。
+    """
     old_dir = LEGACY_DIR / "memory_db"
-    if not old_dir.exists():
+    db_file = old_dir / "chroma.sqlite3"
+    if not db_file.exists():
         print("未找到旧 memory_db，跳过")
         return
-    import chromadb
+    import sqlite3
 
-    old_client = chromadb.PersistentClient(path=str(old_dir))
+    con = sqlite3.connect(str(db_file))
     try:
-        old_col = old_client.get_collection("user_memories")
-    except Exception as e:
-        print(f"旧记忆库读取失败（可能为空）: {e}")
-        return
-
-    old_docs = list(old_col.get()["documents"])
+        rows = con.execute(
+            "SELECT string_value FROM embedding_metadata WHERE key = 'chroma:document'"
+        ).fetchall()
+        if not rows:  # 兜底：部分旧版本文档存于 fulltext 表
+            rows = con.execute(
+                "SELECT c0 FROM embedding_fulltext_search_content"
+            ).fetchall()
+    finally:
+        con.close()
+    old_docs = [r[0] for r in rows if r[0]]
     if not old_docs:
         print("旧记忆库为空")
         return
