@@ -123,6 +123,7 @@ def import_vector_memory() -> None:
     for doc in old_docs:
         if doc not in existing:
             new_vector.save(doc)
+            existing.add(doc)  # 批内同步去重：旧库自身可能含重复文本
             added += 1
     print(f"记忆导入完成: 新增 {added} 条 / 旧库 {len(old_docs)} 条")
 
