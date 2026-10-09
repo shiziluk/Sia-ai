@@ -1,0 +1,28 @@
+# Python
+.venv/
+__pycache__/
+*.pyc
+.pytest_cache/
+.coverage
+htmlcov/
+
+# 环境配置（密钥不进 Git）
+.env
+
+# 前端
+node_modules/
+dist/
+dev-dist/
+
+# 数据文件（运行时生成，不进 Git）
+*.sqlite3
+*.db
+backend/data/
+
+# 历史留档（只读参考，不进 Git）
+_legacy/
+
+# IDE / 系统
+.idea/
+.vscode/
+Thumbs.db
