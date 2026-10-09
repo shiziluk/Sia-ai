@@ -11,6 +11,19 @@ const DIZZY_LINES = [
   '再摇我真的要站不稳了'
 ]
 
+// 情绪反应台词：她对你的话做出的"口头上"的反应（随机抽一条，展示 2.6 秒）
+const REACTION_LINES: Partial<Record<string, string[]>> = {
+  tsundere: ['哼！才、才不是为了你呢…', '笨蛋，别误会了！', '哼，勉、勉强陪陪你吧', '谁、谁要关心你呀！'],
+  shy: ['(⁄ ⁄•⁄ω⁄•⁄ ⁄) 突然这样说…', '讨、讨厌…脸好烫', '唔…让人怎么回答嘛', '你、你在看哪里呀'],
+  surprised: ['欸欸欸？！', '诶——？！真的假的？', '吓、吓我一跳！']
+}
+
+const REACTION_ICONS: Partial<Record<string, string>> = {
+  tsundere: '😤',
+  shy: '😳',
+  surprised: '😲'
+}
+
 const props = defineProps<{
   /** 视差 transform（useParallax 提供） */
   parallax: string
@@ -43,6 +56,30 @@ watch(
     }
   }
 )
+
+// 情绪反应气泡：新回复到来且心情有专属台词时展示
+const reactionLine = ref('')
+let bubbleTimer = 0
+watch(
+  () => [props.mood, props.moodKey] as const,
+  ([mood]) => {
+    const lines = mood ? REACTION_LINES[mood] : undefined
+    if (!lines) return
+    reactionLine.value = lines[Math.floor(Math.random() * lines.length)]
+    window.clearTimeout(bubbleTimer)
+    bubbleTimer = window.setTimeout(() => {
+      reactionLine.value = ''
+    }, 2600)
+  }
+)
+
+/** 气泡内容：发晕优先，其次情绪反应 */
+const bubbleText = computed(() => (props.dizzy ? dizzyLine.value : reactionLine.value))
+
+const bubbleIcon = computed(() => {
+  if (props.dizzy) return '😵‍💫'
+  return (props.mood && REACTION_ICONS[props.mood]) || '💬'
+})
 </script>
 
 <template>
@@ -66,9 +103,9 @@ watch(
       </div>
     </div>
 
-    <!-- 发晕气泡 -->
+    <!-- 反应气泡：发晕 / 情绪台词 -->
     <Transition name="pop">
-      <div v-if="dizzy" class="dizzy-bubble">😵‍💫 {{ dizzyLine }}</div>
+      <div v-if="bubbleText" class="reaction-bubble">{{ bubbleIcon }} {{ bubbleText }}</div>
     </Transition>
   </div>
 </template>
@@ -136,6 +173,18 @@ watch(
 
 .mood-sleepy {
   filter: saturate(0.75) brightness(0.78);
+}
+
+.mood-shy {
+  filter: saturate(1.12) brightness(1.07) hue-rotate(-6deg);
+}
+
+.mood-surprised {
+  filter: contrast(1.08) brightness(1.05);
+}
+
+.mood-tsundere {
+  filter: saturate(1.08) brightness(1.02);
 }
 
 /* ---- 一次性情绪动效 ---- */
@@ -236,6 +285,81 @@ watch(
   }
 }
 
+/* 害羞：缩成一团小幅度扭捏 */
+.anim-shy {
+  animation: anim-curl 1.6s ease-in-out;
+}
+
+@keyframes anim-curl {
+  0%,
+  100% {
+    transform: scale(1) translateY(0);
+  }
+  30% {
+    transform: scale(0.965) translateY(10px);
+  }
+  55% {
+    transform: scale(0.955) translateY(12px) rotate(-0.6deg);
+  }
+  80% {
+    transform: scale(0.965) translateY(9px);
+  }
+}
+
+/* 惊讶：弹起后小抖 */
+.anim-surprised {
+  animation: anim-jolt 1.1s ease;
+}
+
+@keyframes anim-jolt {
+  0%,
+  100% {
+    transform: translateY(0) scale(1);
+  }
+  18% {
+    transform: translateY(-30px) scale(1.03);
+  }
+  38% {
+    transform: translateY(0) scale(1);
+  }
+  52% {
+    transform: translateY(-12px) scale(1.01);
+  }
+  70% {
+    transform: translateY(0) scale(1);
+  }
+  82% {
+    transform: translateX(-5px);
+  }
+  92% {
+    transform: translateX(4px);
+  }
+}
+
+/* 傲娇：扭过头去，又忍不住偷偷瞄回来 */
+.anim-tsundere {
+  animation: anim-turnaway 1.8s ease-in-out;
+}
+
+@keyframes anim-turnaway {
+  0%,
+  100% {
+    transform: translateX(0) rotate(0deg);
+  }
+  25% {
+    transform: translateX(26px) rotate(1.6deg);
+  }
+  45% {
+    transform: translateX(22px) rotate(1.4deg);
+  }
+  65% {
+    transform: translateX(-8px) rotate(-0.8deg);
+  }
+  82% {
+    transform: translateX(14px) rotate(1deg);
+  }
+}
+
 /* ---- 发晕：左右摇晃 + 轻微眩晕旋转 ---- */
 .anim-dizzy {
   animation: anim-wobble 2.5s ease-in-out;
@@ -262,8 +386,8 @@ watch(
   }
 }
 
-/* ---- 发晕气泡 ---- */
-.dizzy-bubble {
+/* ---- 反应气泡（发晕/情绪台词共用） ---- */
+.reaction-bubble {
   position: absolute;
   top: 16%;
   left: 50%;

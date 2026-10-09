@@ -6,7 +6,7 @@ import { useUiStore } from '@/stores/ui'
 import { useParallax } from '@/composables/useParallax'
 import { useDizzy } from '@/composables/useDizzy'
 import { useTTS } from '@/composables/useTTS'
-import { moodOf } from '@/utils/emotionAnim'
+import { reactionMood } from '@/utils/emotionAnim'
 import StageSprite from '@/components/stage/StageSprite.vue'
 import DialogBox from '@/components/stage/DialogBox.vue'
 import HistoryOverlay from '@/components/stage/HistoryOverlay.vue'
@@ -51,8 +51,16 @@ watch(
   }
 )
 
-/** 当前心情：来自最新回复的情绪标签 */
-const mood = computed(() => moodOf(lastReply.value?.emotion))
+/** 最新一条用户消息（她"对你的话做反应"的判定来源） */
+const lastUserText = computed(() => {
+  for (let i = chat.messages.length - 1; i >= 0; i -= 1) {
+    if (chat.messages[i].role === 'user') return chat.messages[i].content
+  }
+  return ''
+})
+
+/** 当前心情：优先看你说了什么（撩/夸/惊叹 → 害羞/傲娇/惊讶），否则跟随你的情绪标签 */
+const mood = computed(() => reactionMood(lastUserText.value, lastReply.value?.emotion))
 
 /** 一轮发送结束 → 语音播报最新回复（初始化欢迎语不播） */
 watch(
