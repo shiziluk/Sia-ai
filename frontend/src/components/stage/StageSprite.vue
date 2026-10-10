@@ -2,6 +2,7 @@
 import { computed, ref, watch } from 'vue'
 import { EXPRESSION_DIFFS, MAIN_SPRITE } from '@/config/sprite'
 import type { Mood } from '@/utils/emotionAnim'
+import StageParallax from '@/components/stage/StageParallax.vue'
 
 // 发晕台词（触发时随机抽一条）
 const DIZZY_LINES = [
@@ -25,8 +26,11 @@ const REACTION_ICONS: Partial<Record<string, string>> = {
 }
 
 const props = defineProps<{
-  /** 视差 transform（useParallax 提供） */
+  /** 视差 transform（useParallax 提供）；WebGL 2.5D 视差启用时不再使用 */
   parallax: string
+  /** 指针归一化坐标（-1~1，useParallax 提供），转发给 2.5D 视差组件 */
+  pointerX?: number
+  pointerY?: number
   /** 当前心情（驱动动效与滤镜；空串=呼吸待机） */
   mood?: Mood
   /** 回复序号：每条新回复 +1，用于重触发一次性情绪动画 */
@@ -34,6 +38,12 @@ const props = defineProps<{
   /** 发晕状态 */
   dizzy?: boolean
 }>()
+
+/**
+ * 2.5D 深度视差是否可用：初始乐观，WebGL 不可用或上下文丢失时由子组件回报失败，
+ * 自动回退到现有 <img> + CSS 方案（渐进增强，不破坏现状）。
+ */
+const webglOk = ref(true)
 
 /** 表情差分：配置了对应情绪的差分图则换图，否则用主立绘 */
 const currentSrc = computed(() => {
@@ -84,16 +94,25 @@ const bubbleIcon = computed(() => {
 
 <template>
   <div class="sprite-viewport">
-    <!-- 视差层：随鼠标整体倾斜/位移 -->
-    <div class="sprite-parallax" :style="{ transform: parallax }">
+    <!-- 视差层：WebGL 2.5D 视差时由着色器接管；回退时用 CSS transform 伪视线跟随 -->
+    <div class="sprite-parallax" :style="webglOk ? undefined : { transform: parallax }">
       <!-- 情绪动画层：一次性动效（bounce/摇晃…） -->
       <div
         :key="animKey"
         class="sprite-anim"
         :class="[mood ? `anim-${mood}` : '', dizzy ? 'anim-dizzy' : '']"
       >
-        <!-- 立绘：呼吸待机常驻 + 心情滤镜 -->
+        <!-- 立绘：优先 2.5D 深度视差（PixiJS），WebGL 不可用时回退静态图 -->
+        <StageParallax
+          v-if="webglOk"
+          :class="['sprite-canvas', mood ? `mood-${mood}` : '']"
+          :pointer-x="pointerX"
+          :pointer-y="pointerY"
+          @failed="webglOk = false"
+        />
+        <!-- 立绘（回退）：呼吸待机常驻 + 心情滤镜 -->
         <img
+          v-else
           class="sprite-img"
           :class="mood ? `mood-${mood}` : ''"
           :src="currentSrc"
@@ -152,6 +171,13 @@ const bubbleIcon = computed(() => {
   50% {
     transform: scale(1.088) translateY(-9px);
   }
+}
+
+/* 2.5D 视差画布：铺满舞台（呼吸/视差/边缘保护由着色器负责，CSS 不再叠加 transform） */
+.sprite-canvas {
+  display: block;
+  width: 100%;
+  height: 100%;
 }
 
 /* ---- 心情滤镜（差分图的低成本近似） ---- */

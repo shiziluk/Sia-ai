@@ -8,6 +8,7 @@ import { useDizzy } from '@/composables/useDizzy'
 import { useTTS } from '@/composables/useTTS'
 import { reactionMood } from '@/utils/emotionAnim'
 import StageSprite from '@/components/stage/StageSprite.vue'
+import Live2dStage from '@/components/stage/Live2dStage.vue'
 import DialogBox from '@/components/stage/DialogBox.vue'
 import HistoryOverlay from '@/components/stage/HistoryOverlay.vue'
 import PanelsOverlay from '@/components/stage/PanelsOverlay.vue'
@@ -17,8 +18,11 @@ const chat = useChatStore()
 const ui = useUiStore()
 const { overlay, ttsEnabled } = storeToRefs(ui)
 
-// 视差（伪视线跟随）+ 发晕检测
-const { speed, transform } = useParallax()
+/** Live2D / 写实立绘切换（技术验证用临时开关，正式版再决定默认值与持久化） */
+const useLive2d = ref(true)
+
+// 视差（伪视线跟随）+ 发晕检测（nx/ny 同时供 2.5D 深度视差着色器使用）
+const { nx, ny, speed, transform } = useParallax()
 const { dizzy } = useDizzy(speed)
 
 // TTS 语音回复
@@ -86,8 +90,17 @@ function onKey(e: KeyboardEvent): void {
 
 <template>
   <div class="stage">
-    <!-- 全屏立绘舞台 -->
-    <StageSprite :parallax="transform" :mood="mood" :mood-key="replyKey" :dizzy="dizzy" />
+    <!-- 全屏立绘舞台：Live2D（技术验证）与写实立绘可切换 -->
+    <Live2dStage v-if="useLive2d" :mood="mood" />
+    <StageSprite
+      v-else
+      :parallax="transform"
+      :pointer-x="nx"
+      :pointer-y="ny"
+      :mood="mood"
+      :mood-key="replyKey"
+      :dizzy="dizzy"
+    />
 
     <!-- 暗角：保证底部对话框文字可读；夜间加重 -->
     <div class="stage-shade"></div>
@@ -106,6 +119,14 @@ function onKey(e: KeyboardEvent): void {
       </button>
       <button class="hud-btn" type="button" title="设置" @click="ui.openOverlay('settings')">
         ⚙️
+      </button>
+      <button
+        class="hud-btn"
+        type="button"
+        :title="useLive2d ? '切回写实立绘' : '切换到 Live2D'"
+        @click="useLive2d = !useLive2d"
+      >
+        🎭
       </button>
       <button
         class="hud-btn"

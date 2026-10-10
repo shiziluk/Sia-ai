@@ -25,6 +25,29 @@ export const PARALLAX = {
   settleEpsilon: 0.001 // 视为停止追值的误差阈值
 }
 
+/** 2.5D 深度视差的日/夜场景标识（对应 ui store 的 theme） */
+export type StageSceneKey = 'day' | 'night'
+
+/**
+ * 2.5D 深度视差资源：日/夜各一套「插画 + 深度图」。
+ * 深度图规格：与插画同源同分辨率、8 位灰度 PNG、白=近（前端读 R 通道）。
+ * ⚠️ 正式希亚日/夜立绘就位前，先用已验证的母版及其深度图跑通管线（日/夜暂同源）。
+ */
+export const PARALLAX_SCENES: Record<StageSceneKey, { src: string; depth: string }> = {
+  night: { src: MAIN_SPRITE, depth: '/avatars/stage-main-depth.png' },
+  day: { src: MAIN_SPRITE, depth: '/avatars/stage-main-depth.png' }
+}
+
+/** 2.5D 深度视差参数（PixiJS 自定义着色器的手感） */
+export const PARALLAX_2D5 = {
+  strength: 0.035, // 深度视差强度（画面归一化坐标比例，上限建议 3%~5%）
+  pointerGain: 1.6, // 鼠标视差相对深度视差的倍数
+  breathAmp: 0.006, // 呼吸微动幅度
+  breathPeriodMs: 5200, // 呼吸周期
+  margin: 0.08, // 四边形相对视口的外扩边距（边缘保护，避免视差采样露边）
+  objectPositionY: 0.3 // 与现有立绘 object-position: 50% 30% 对齐
+}
+
 /** 发晕检测参数 */
 export const DIZZY = {
   speedThreshold: 2500, // 指针瞬时速度阈值（px/s）
