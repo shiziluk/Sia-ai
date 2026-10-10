@@ -28,10 +28,10 @@ def _freeze_now(monkeypatch, year, month, day, hour=12, minute=0):
 def test_character_prompt_contains_profile():
     p = persona.generate_character_system_prompt()
     assert "希亚" in p
-    assert "用户专属的AI女友" in p
-    assert "表面傲娇腹黑" in p
-    assert "哼！" in p  # speech_patterns
-    assert "要默默守护小叶" in p
+    assert "千年旅者" in p
+    assert "嘴不饶人" in p
+    assert "开玩笑的～" in p  # speech_patterns
+    assert "我找到你了" in p
 
 
 def test_emotion_emoji_map():
@@ -263,8 +263,8 @@ def test_welcome_birthday_eve(monkeypatch):
 
 def test_welcome_by_intimacy_level():
     assert "谁准你直接叫我的名字" in persona.build_welcome(False, False, 100, 1)
-    assert "毒舌吐槽" in persona.build_welcome(False, False, 100, 2)
-    assert "置顶聊天" in persona.build_welcome(False, False, 100, 3)
+    assert "妖怪的故事" in persona.build_welcome(False, False, 100, 2)
+    assert "泡了两杯茶" in persona.build_welcome(False, False, 100, 3)
     assert "笨蛋小叶" in persona.build_welcome(False, False, 100, 4)
 
 
