@@ -12,10 +12,10 @@
   4. ChatGLM3-6B **暂不动**：重构完成后评估价值，无用再安全移除（含模型目录 11.6GB）
 - **交付标准**：源代码、详细设计文档、API 文档、测试报告、部署说明；单元+集成测试覆盖率 ≥ 80%；代码规范、注释完善。
 
-## 目标目录（迁移到 d:\workspace\xia-ai）
+## 目标目录（迁移到 d:\\workspace\\Sia-ai）
 
 ```
-d:\workspace\xia-ai\
+d:\\workspace\\Sia-ai\
 ├── backend\
 │   ├── app\
 │   │   ├── main.py               # FastAPI 入口 + CORS + 统一异常处理
@@ -59,7 +59,7 @@ d:\workspace\xia-ai\
 ## 里程碑（按序推进，每步可验证）
 
 ### Phase 0：立档迁移 + 现状评估
-1. `git init d:\workspace\xia-ai`；整目录拷贝源项目 → `_legacy\`（只读留档，永不改动）
+1. `git init d:\\workspace\\Sia-ai`；整目录拷贝源项目 → `_legacy\`（只读留档，永不改动）
 2. 通读 `AI女友_V13.py`（重构功能对照的**唯一基线**），逐项列出功能清单写入评估报告
 3. 产出 `docs\01_项目现状评估.md`：版本时间线、技术栈盘点、技术债务清单
 
@@ -86,7 +86,7 @@ d:\workspace\xia-ai\
 
 ```powershell
 # 后端测试（覆盖率≥80%为通过）
-cd d:\workspace\xia-ai\backend
+cd d:\\workspace\\Sia-ai\backend
 .venv\Scripts\python -m pytest --cov=app --cov-report=term --cov-fail-under=80
 
 # 冒烟：双服务起跑

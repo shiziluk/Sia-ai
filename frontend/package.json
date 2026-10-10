@@ -1,5 +1,5 @@
 {
-  "name": "xia-ai-frontend",
+  "name": "Sia-ai-frontend",
   "version": "1.0.0",
   "private": true,
   "type": "module",
@@ -13,8 +13,10 @@
     "format": "prettier --write \"src/**/*.{vue,ts,css}\""
   },
   "dependencies": {
+    "@jannchie/pixi-live2d-display": "^1.4.0",
     "axios": "^1.20.0",
     "pinia": "^3.0.3",
+    "pixi.js": "^8.22.0",
     "vue": "^3.5.13",
     "vue-router": "^4.5.0"
   },
