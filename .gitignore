@@ -26,3 +26,8 @@ _legacy/
 .idea/
 .vscode/
 Thumbs.db
+
+# 出图中间产物（ComfyUI/SD 步骤图与临时预览，不进 Git）
+frontend/public/avatars/final_*.png
+frontend/public/avatars/sia_*.png
+frontend/public/style-preview.html
