@@ -81,14 +81,8 @@ export const useChatStore = defineStore('chat', () => {
         emotion: res.emotion,
         time: nowHM()
       })
-      // 有新记忆时追加系统提示气泡
-      if (res.saved_memory) {
-        messages.value.push({
-          id: nextId++,
-          role: 'system',
-          content: `🧠 希亚把「${res.saved_memory}」悄悄记在小本本上了`
-        })
-      }
+      // 记忆静默沉淀：不再把「记下这件事」当作一条消息说出口（沉浸感），
+      // 事实已在后端入库，会自然融入她之后的对话里。
       state.value = res.state
     } catch (err) {
       messages.value.push({
