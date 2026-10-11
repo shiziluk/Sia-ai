@@ -4,7 +4,7 @@
  */
 
 /** 主立绘（全屏舞台底图） */
-export const MAIN_SPRITE = '/avatars/stage-main.png'
+export const MAIN_SPRITE = '/avatars/stage-realistic-night.png'
 
 /**
  * 情绪差分立绘：mood → 图片路径。
@@ -31,11 +31,11 @@ export type StageSceneKey = 'day' | 'night'
 /**
  * 2.5D 深度视差资源：日/夜各一套「插画 + 深度图」。
  * 深度图规格：与插画同源同分辨率、8 位灰度 PNG、白=近（前端读 R 通道）。
- * ⚠️ 正式希亚日/夜立绘就位前，先用已验证的母版及其深度图跑通管线（日/夜暂同源）。
+ * ⚠️ 夜版写实立绘已就位（半身+花店背景，1152×1344）；日版待出，暂同源夜版。
  */
 export const PARALLAX_SCENES: Record<StageSceneKey, { src: string; depth: string }> = {
-  night: { src: MAIN_SPRITE, depth: '/avatars/stage-main-depth.png' },
-  day: { src: MAIN_SPRITE, depth: '/avatars/stage-main-depth.png' }
+  night: { src: MAIN_SPRITE, depth: '/avatars/stage-realistic-night-depth.png' },
+  day: { src: MAIN_SPRITE, depth: '/avatars/stage-realistic-night-depth.png' }
 }
 
 /** 2.5D 深度视差参数（PixiJS 自定义着色器的手感） */
