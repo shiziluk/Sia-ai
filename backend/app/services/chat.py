@@ -365,12 +365,10 @@ def process_message(
     db.add(Message(role="assistant", content=response))
     db.commit()
 
-    # ---- 记忆沉淀（修复 Bug#1：事实真正落日志）----
+    # ---- 记忆沉淀（静默入库，修复 Bug#1：事实真正落日志）----
+    # 注意：不再单独生成「我记住了…」确认消息——记忆是她的本能，
+    # 直接自然融入后续对话即可，避免「把记住这件事也说出口」破坏沉浸感。
     saved_memory_fact = memory.remember_if_important(user_text)
-    if saved_memory_fact:
-        memory_msg = f"🧠 嗯嗯～我已经把「{saved_memory_fact}」悄悄记在小本本上了"
-        db.add(Message(role="assistant", content=memory_msg))
-        db.commit()
 
     # ---- 每日情绪日志（入 DB，重启不丢）----
     db.add(DailyLog(

@@ -306,9 +306,9 @@ def test_process_message_saves_memory_bug1(db, fake_vector):
     assert "小叶的生日是4月6日" in fake_vector.docs  # 入向量库
     log = db.query(DailyLog).one()
     assert log.saved_memory == "小叶的生日是4月6日"  # 入日志（V13 永远 None）
-    # 记忆提示消息存在
+    # 记忆静默沉淀：不再生成「我记住了 / 小本本」确认消息（沉浸感）
     memory_msgs = [m for m in db.query(Message).all() if "小本本" in m.content]
-    assert len(memory_msgs) == 1
+    assert len(memory_msgs) == 0
 
 
 def test_process_message_confession_trust(db, mock_llm, fake_vector):
