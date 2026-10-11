@@ -78,7 +78,22 @@ uniform vec4 uVisRect;
 
 void main(void)
 {
-    float d = texture(uDepth, clamp(vUV, 0.0, 1.0)).r;
+    // 3x3 深度模糊：软化半透明区域（头发、花边缘）的硬边，
+    // 避免视差时整块平移露出背景产生穿帮。
+    // 中心权重 4，四邻 1，对角 0.5（近似高斯）。
+    float dSum = 0.0;
+    float dW = 0.0;
+    // 固定偏移：插画 896px 级，1 像素 ≈ 0.0011 UV，取略大一点保证覆盖
+    vec2 px = vec2(0.0015);
+    for (int x = -1; x <= 1; x++) {
+        for (int y = -1; y <= 1; y++) {
+            float w = (x == 0 && y == 0) ? 4.0 :
+                      (x == 0 || y == 0) ? 1.0 : 0.5;
+            dSum += texture(uDepth, clamp(vUV + vec2(float(x), float(y)) * px, 0.0, 1.0)).r * w;
+            dW += w;
+        }
+    }
+    float d = dSum / dW;
     float w = d - 0.5;
 
     vec2 visCenter = vec2((uVisRect.x + uVisRect.z) * 0.5, (uVisRect.y + uVisRect.w) * 0.5);
@@ -87,7 +102,9 @@ void main(void)
 
     vec2 uv = vUV;
     uv += ndc * w * uStrength;
-    uv += uPointer * w * uStrength;
+    // 指针视差方向取反：模拟角色「转头面向鼠标」而非「相机位移」。
+    // （相机位移视差是前景相对背景反方向移，角色跟随则是画面与鼠标同向。）
+    uv -= uPointer * w * uStrength;
     uv += ndc * uBreath * (0.4 + d * 0.6);
 
     finalColor = texture(uIllustration, clamp(uv, 0.001, 0.999));
