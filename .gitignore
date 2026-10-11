@@ -28,6 +28,10 @@ _legacy/
 Thumbs.db
 
 # 出图中间产物（ComfyUI/SD 步骤图与临时预览，不进 Git）
+sia_out/
+_tmp_*.py
+debug.log
 frontend/public/avatars/final_*.png
 frontend/public/avatars/sia_*.png
+frontend/public/avatars/_mask_preview.png
 frontend/public/style-preview.html
