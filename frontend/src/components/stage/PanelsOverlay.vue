@@ -92,12 +92,12 @@ const tab = ref<TabKey>('affinity')
 .tab-btn {
   padding: 7px 14px;
   border: 1px solid transparent;
-  border-radius: 999px;
+  border-radius: 6px;
   background: transparent;
   color: var(--text-soft);
   font-size: 13px;
   cursor: pointer;
-  transition: background 0.15s ease, color 0.15s ease;
+  transition: background 0.15s ease, color 0.15s ease, border-color 0.15s ease;
 }
 
 .tab-btn:hover {
@@ -106,9 +106,9 @@ const tab = ref<TabKey>('affinity')
 }
 
 .tab-btn--active {
-  background: var(--primary-soft-bg);
-  border-color: var(--border);
-  color: var(--primary);
+  background: var(--cyber-soft);
+  border-color: var(--cyber-border);
+  color: var(--cyber);
   font-weight: 600;
 }
 
@@ -128,8 +128,8 @@ const tab = ref<TabKey>('affinity')
 }
 
 .close-btn:hover {
-  background: var(--primary-soft-bg);
-  color: var(--primary);
+  background: var(--cyber-soft);
+  color: var(--cyber);
 }
 
 .panels-body {

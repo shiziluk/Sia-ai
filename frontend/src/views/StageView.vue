@@ -13,13 +13,11 @@ import DialogBox from '@/components/stage/DialogBox.vue'
 import HistoryOverlay from '@/components/stage/HistoryOverlay.vue'
 import PanelsOverlay from '@/components/stage/PanelsOverlay.vue'
 import SettingsDrawer from '@/components/stage/SettingsDrawer.vue'
+import SiaIcon from '@/components/SiaIcon.vue'
 
 const chat = useChatStore()
 const ui = useUiStore()
-const { overlay, ttsEnabled } = storeToRefs(ui)
-
-/** Live2D / 写实立绘切换（技术验证用临时开关，正式版再决定默认值与持久化） */
-const useLive2d = ref(true)
+const { overlay, ttsEnabled, useLive2d } = storeToRefs(ui)
 
 // 视差（伪视线跟随）+ 发晕检测（nx/ny 同时供 2.5D 深度视差着色器使用）
 const { nx, ny, speed, transform } = useParallax()
@@ -27,6 +25,21 @@ const { dizzy } = useDizzy(speed)
 
 // TTS 语音回复
 const { speaking, autoplayBlocked, speak, resume, stop } = useTTS(ttsEnabled)
+
+/** HUD 触控条：平时隐藏，鼠标移到顶部区域才浮现，避免破坏沉浸感 */
+const hudVisible = ref(false)
+let hudHideTimer = 0
+
+function onStagePointerMove(e: PointerEvent): void {
+  window.clearTimeout(hudHideTimer)
+  if (e.clientY < 88) {
+    hudVisible.value = true
+  } else if (hudVisible.value) {
+    hudHideTimer = window.setTimeout(() => {
+      hudVisible.value = false
+    }, 320)
+  }
+}
 
 onMounted(() => {
   if (!chat.initialized) void chat.init()
@@ -89,7 +102,7 @@ function onKey(e: KeyboardEvent): void {
 </script>
 
 <template>
-  <div class="stage">
+  <div class="stage" @pointermove="onStagePointerMove">
     <!-- 全屏立绘舞台：Live2D（技术验证）与写实立绘可切换 -->
     <Live2dStage v-if="useLive2d" :mood="mood" />
     <StageSprite
@@ -106,27 +119,19 @@ function onKey(e: KeyboardEvent): void {
     <div class="stage-shade"></div>
 
     <!-- HUD -->
-    <header class="stage-hud">
+    <header class="stage-hud" :class="{ 'is-visible': hudVisible }">
       <span v-if="chat.state" class="hud-badge" :title="`好感度 ${chat.state.trust}/100`">
         💗 {{ chat.state.trust }}/100 · {{ chat.state.intimacy_label }}
       </span>
       <span class="hud-spacer"></span>
       <button class="hud-btn" type="button" title="历史对话" @click="ui.openOverlay('history')">
-        📜
+        <SiaIcon name="history" />
       </button>
       <button class="hud-btn" type="button" title="关系与回忆" @click="ui.openOverlay('panels')">
-        💞
+        <SiaIcon name="heart" />
       </button>
       <button class="hud-btn" type="button" title="设置" @click="ui.openOverlay('settings')">
-        ⚙️
-      </button>
-      <button
-        class="hud-btn"
-        type="button"
-        :title="useLive2d ? '切回写实立绘' : '切换到 Live2D'"
-        @click="useLive2d = !useLive2d"
-      >
-        🎭
+        <SiaIcon name="settings" />
       </button>
       <button
         class="hud-btn"
@@ -134,7 +139,7 @@ function onKey(e: KeyboardEvent): void {
         :title="ttsEnabled ? '关闭语音回复' : '开启语音回复'"
         @click="ui.toggleTts"
       >
-        {{ ttsEnabled ? '🔊' : '🔇' }}
+        <SiaIcon :name="ttsEnabled ? 'volume' : 'volumeMute'" />
       </button>
       <button
         class="hud-btn"
@@ -142,9 +147,19 @@ function onKey(e: KeyboardEvent): void {
         :title="ui.theme === 'night' ? '切换到日间' : '切换到夜间'"
         @click="ui.toggleTheme"
       >
-        {{ ui.theme === 'night' ? '☀️' : '🌙' }}
+        <SiaIcon :name="ui.theme === 'night' ? 'sun' : 'moon'" />
       </button>
     </header>
+
+    <!-- 立绘切换：始终可见的小悬浮按钮（右上角），保证功能可发现 -->
+    <button
+      class="render-toggle"
+      type="button"
+      :title="useLive2d ? '切换到写实立绘' : '切换到 Live2D 动态形象'"
+      @click="ui.toggleRenderMode"
+    >
+      <SiaIcon name="user" />
+    </button>
 
     <!-- 底部 galgame 对话框 -->
     <DialogBox
@@ -194,7 +209,7 @@ html.night .stage-shade {
   );
 }
 
-/* ---- HUD ---- */
+/* ---- HUD：触控条，平时隐藏、鼠标移到顶部浮现，科幻风格 ---- */
 .stage-hud {
   position: absolute;
   top: 0;
@@ -203,19 +218,31 @@ html.night .stage-shade {
   display: flex;
   align-items: center;
   gap: 8px;
-  padding: 14px 18px;
+  padding: 14px 64px 14px 18px;
   z-index: 5;
+  opacity: 0;
+  transform: translateY(-12px);
+  pointer-events: none;
+  transition: opacity 0.35s ease, transform 0.35s ease;
+}
+
+.stage-hud.is-visible {
+  opacity: 1;
+  transform: translateY(0);
+  pointer-events: auto;
 }
 
 .hud-badge {
   padding: 5px 12px;
   border-radius: 999px;
-  background: var(--stage-glass);
-  backdrop-filter: blur(12px);
-  border: 1px solid var(--border);
-  color: var(--text);
+  background: var(--hud-glass);
+  backdrop-filter: blur(10px);
+  border: 1px solid var(--cyber-border);
+  color: var(--cyber-strong);
   font-size: 12.5px;
+  letter-spacing: 0.3px;
   white-space: nowrap;
+  box-shadow: inset 0 0 12px var(--cyber-soft);
 }
 
 .hud-spacer {
@@ -228,18 +255,53 @@ html.night .stage-shade {
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  border: 1px solid var(--border);
-  border-radius: 13px;
-  background: var(--stage-glass);
-  backdrop-filter: blur(12px);
-  font-size: 17px;
+  border: 1px solid var(--cyber-border);
+  border-radius: 9px;
+  background: var(--hud-glass);
+  backdrop-filter: blur(10px);
+  color: var(--cyber-strong);
+  font-size: 16px;
   cursor: pointer;
-  transition: transform 0.15s ease, background 0.15s ease;
+  transition: transform 0.18s ease, border-color 0.18s ease, box-shadow 0.18s ease,
+    background 0.18s ease, color 0.18s ease;
 }
 
 .hud-btn:hover {
-  transform: translateY(-2px);
-  background: var(--primary-soft-bg);
+  transform: translateY(-1px);
+  border-color: var(--cyber);
+  color: #ffffff;
+  background: var(--cyber-soft);
+  box-shadow: var(--cyber-glow);
+}
+
+/* 立绘切换悬浮按钮：始终可见，与其他 HUD 按钮同款科幻风格 */
+.render-toggle {
+  position: absolute;
+  top: 14px;
+  right: 18px;
+  z-index: 6;
+  width: 38px;
+  height: 38px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border: 1px solid var(--cyber-border);
+  border-radius: 9px;
+  background: var(--hud-glass);
+  backdrop-filter: blur(10px);
+  color: var(--cyber-strong);
+  font-size: 16px;
+  cursor: pointer;
+  transition: transform 0.18s ease, border-color 0.18s ease, box-shadow 0.18s ease,
+    background 0.18s ease, color 0.18s ease;
+}
+
+.render-toggle:hover {
+  transform: translateY(-1px);
+  border-color: var(--cyber);
+  color: #ffffff;
+  background: var(--cyber-soft);
+  box-shadow: var(--cyber-glow);
 }
 
 /* ---- 对话框位置 ---- */
@@ -254,11 +316,19 @@ html.night .stage-shade {
 /* ---- 移动端 ---- */
 @media (max-width: 899px) {
   .stage-hud {
-    padding: 10px 10px;
+    padding: 10px 54px 10px 10px;
     gap: 6px;
   }
 
   .hud-btn {
+    width: 34px;
+    height: 34px;
+    font-size: 15px;
+  }
+
+  .render-toggle {
+    top: 10px;
+    right: 10px;
     width: 34px;
     height: 34px;
     font-size: 15px;
@@ -271,6 +341,15 @@ html.night .stage-shade {
 
   .stage-dialog {
     bottom: 10px;
+  }
+}
+
+/* ---- 触屏设备：无 hover，HUD 保持常显，避免找不到入口 ---- */
+@media (pointer: coarse) {
+  .stage-hud {
+    opacity: 1;
+    transform: none;
+    pointer-events: auto;
   }
 }
 </style>

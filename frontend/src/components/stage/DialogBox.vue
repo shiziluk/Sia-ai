@@ -3,6 +3,7 @@ import { nextTick, ref, watch } from 'vue'
 import { useRecorder } from '@/composables/useRecorder'
 import { useTypewriter } from '@/composables/useTypewriter'
 import { useChatStore } from '@/stores/chat'
+import SiaIcon from '@/components/SiaIcon.vue'
 
 const props = defineProps<{
   /** 当前展示的回复文本（最新一条 assistant 消息） */
@@ -125,7 +126,7 @@ watch(draft, () => {
         :title="recording ? '停止并识别' : '点一下开始录音'"
         @click="toggle"
       >
-        {{ busy ? '⏳' : recording ? '⏹' : '🎤' }}
+        <SiaIcon :name="recording ? 'stop' : 'mic'" />
       </button>
       <textarea
         ref="inputEl"
@@ -136,7 +137,7 @@ watch(draft, () => {
         @keydown="onKeydown"
       ></textarea>
       <button class="send-btn" type="button" :disabled="chat.sending || !draft.trim()" @click="send">
-        ➤
+        <SiaIcon name="send" />
       </button>
     </div>
 
@@ -279,7 +280,7 @@ watch(draft, () => {
 }
 
 .dialog-input__field:focus {
-  border-color: var(--primary);
+  border-color: var(--cyber);
 }
 
 .mic-btn {
@@ -287,10 +288,14 @@ watch(draft, () => {
   height: 38px;
   flex-shrink: 0;
   border-radius: 50%;
-  border: 1px solid var(--border);
+  border: 1px solid var(--cyber-border);
   background: var(--card);
+  color: var(--cyber);
   font-size: 16px;
   cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
 }
 
 .mic-btn:disabled {
@@ -320,10 +325,13 @@ watch(draft, () => {
   flex-shrink: 0;
   border: none;
   border-radius: 50%;
-  background: var(--bubble-user);
-  color: var(--bubble-user-text);
+  background: var(--cyber);
+  color: #05262e;
   font-size: 16px;
   cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
 }
 
 .send-btn:disabled {

@@ -4,6 +4,7 @@ import { ref } from 'vue'
 const THEME_KEY = 'xia-theme'
 const CRITIQUE_KEY = 'xia-critique'
 const TTS_KEY = 'xia-tts'
+const RENDER_KEY = 'xia-render'
 
 export type Theme = 'day' | 'night'
 
@@ -24,6 +25,9 @@ export const useUiStore = defineStore('ui', () => {
 
   // 语音回复开关（TTS），默认开启
   const ttsEnabled = ref(localStorage.getItem(TTS_KEY) !== '0')
+
+  // 形象渲染模式：默认 Live2D，可切换写实立绘（原 StageView 临时开关收编至此）
+  const useLive2d = ref(localStorage.getItem(RENDER_KEY) !== '0')
 
   /** 手动切换日间/夜间主题（锁定，不再跟随服务端） */
   function toggleTheme(): void {
@@ -56,17 +60,24 @@ export const useUiStore = defineStore('ui', () => {
     localStorage.setItem(TTS_KEY, ttsEnabled.value ? '1' : '0')
   }
 
+  function toggleRenderMode(): void {
+    useLive2d.value = !useLive2d.value
+    localStorage.setItem(RENDER_KEY, useLive2d.value ? '1' : '0')
+  }
+
   return {
     theme,
     themeLocked,
     overlay,
     enableCritique,
     ttsEnabled,
+    useLive2d,
     toggleTheme,
     syncThemeWithServer,
     toggleCritique,
     openOverlay,
     closeOverlay,
-    toggleTts
+    toggleTts,
+    toggleRenderMode
   }
 })

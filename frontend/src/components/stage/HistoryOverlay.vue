@@ -109,8 +109,8 @@ function nameOf(role: string): string {
 }
 
 .close-btn:hover {
-  background: var(--primary-soft-bg);
-  color: var(--primary);
+  background: var(--cyber-soft);
+  color: var(--cyber);
 }
 
 .history-list {

@@ -275,8 +275,8 @@ async function doClearHistory(): Promise<void> {
 }
 
 .close-btn:hover {
-  background: var(--primary-soft-bg);
-  color: var(--primary);
+  background: var(--cyber-soft);
+  color: var(--cyber);
 }
 
 .drawer-scroll {
@@ -416,12 +416,15 @@ html.night .error {
 
 .btn--danger {
   background: transparent;
-  border: 1px solid #e57373;
-  color: #e57373;
+  border: 1px solid rgba(255, 99, 132, 0.5);
+  color: #ff9db0;
 }
 
 .btn--danger:hover {
-  background: rgba(229, 115, 115, 0.1);
+  border-color: #ff6b8a;
+  color: #fff;
+  background: rgba(255, 99, 132, 0.1);
+  box-shadow: 0 0 12px rgba(255, 99, 132, 0.35);
 }
 
 /* ---- 过渡：右侧滑入滑出 ---- */
