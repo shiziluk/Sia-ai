@@ -1,0 +1,64 @@
+# Haru 级 Live2D 制作路线调研
+
+> 调研日期：2026-10-13。目标：让希亚拥有与官方 Haru 同级的真 Live2D 形象（当前前端跑的是官方 Haru 运行时文件占位）。
+> 关联文档：[docs/08_Live2D升级调研与实施清单.md](file:///e:/self_project/Sia-ai/docs/08_Live2D升级调研与实施清单.md)（早期调研）、[docs/12_假Live2D驱动调研与实施清单.md](file:///e:/self_project/Sia-ai/docs/12_假Live2D驱动调研与实施清单.md)、[docs/13_生图全流程自检体系.md](file:///e:/self_project/Sia-ai/docs/13_生图全流程自检体系.md)（三视图底图迭代）。
+
+## 一、Haru 模型解剖（本地文件分析结论）
+
+本地 `frontend/public/live2d/haru/` 只有**运行时文件**，没有可编辑源文件：
+
+| 文件 | 作用 |
+|---|---|
+| `haru_greeter_t03.moc3` | 编译后的模型（不可逆向编辑） |
+| `texture_00/01.png` | 2×2048 贴图集 |
+| `physics3.json` | 4 组摆锤物理（前发/侧发/后发/围巾，全部由 AngleX/Z + BodyAngle 驱动） |
+| `pose3.json` / `cdi3.json` | 姿势/显示信息 |
+| `expressions/F01-F08.exp3.json` | 8 个表情差分 |
+| `motions/` | Idle + Tap×2 动作 |
+| Groups | EyeBlink（ParamEyeLOpen/ROpen）、LipSync（ParamMouthOpenY） |
+
+**关键结论**：官方在 [Haru 示例页](https://www.live2d.com/zh-CHS/learn/sample/haru/) **免费发放 .cmo3 工程源文件**（含物理/姿势/表情/动作/换装；一般用户与小规模企业可商用）。[Haru receptionist 版](https://www.live2d.com/zh-CHS/learn/sample/haru-receptionist/) 额外附**「划分素材前后」教学 PSD**——专门示范 Live2D 部件拆层的 PSD 结构。
+
+### 完整制作链条
+
+```
+分层 PSD（部件拆解 + 遮挡补画） → Cubism 绑定（网格/变形器/参数/物理） → 导出 moc3 → 前端渲染
+```
+
+我们卡的是前两步；末端管线（pixi-live2d-display）已通，换 model3.json 文件族即可。
+
+### Cubism Editor 版本约束
+
+- **FREE 版**：可打开 PRO 级文件（如 Haru）查看学习、部分编辑，但**不能保存/导出**
+- **PRO 版**：42 天全功能试用；试用期内可用官方素材分割 PS 插件
+- 官方 6 课基础教程（[docs.live2d.com/cubism-editor-tutorials](https://docs.live2d.com/zh-CHS/cubism-editor-tutorials/)）：插图处理（PSD 拆件规范）→ 准备运动 → 表情 → 变形器 → XY 头部 → 动画；教程用 Hiyori Momose 素材免费下载
+
+## 二、GitHub 调研到的关键工具
+
+| 工具 | 作用 | 对本项目的价值 |
+|---|---|---|
+| [see-through](https://github.com/shitagaki-lab/see-through)（SIGGRAPH 2026） | **单张动漫图 → 自动拆成 23 层带补画的分层 PSD**（LayerDiff 3D + Marigold 深度 + SAM 身体解析） | 直接解决「拆件」这个最脏的活；**README 明确支持 8GB 显存 NF4 量化管线**（`inference_psd_quantized.py`，~8GB peak VRAM @1280）；另有 [ComfyUI 节点版](https://github.com/jtydhr88/ComfyUI-See-through)（本机已装 ComfyUI）；国内可用 [ModelScope 免费在线 demo](https://modelscope.cn/studios/ljsabc/See-Through)（分辨率更高） |
+| [PSD2Live](https://github.com/tsunehimatoi/psd2live)（GPL-3.0/MIT） | **分层 PSD → 自动绑定**：识别中/英/日/韩图层名，自动生成网格、变形器链、五官参数、待机/眨眼/点头动作、头发物理与布料模拟，**一键导出 moc3/cmo3**（Cubism 3.0–5.3）、VTube Studio、网页、游戏引擎 | 解决「绑定」这个学习曲线最陡的活；Windows 便携版免安装；**内置 MCP 服务（180+ 操作）——助手可直接通过 MCP 读写工程**；支持命令行 `--input xxx.psd --output`；导出的 cmo3 可回官方编辑器精修；PSD 命名规范见其 `docs/zh/spec/PSD_LAYER_SPEC.md` |
+| [官方素材分割 PS 插件](https://www.live2d.com/zh-CHS/cubism/download/material-separation-ps-plugin/) | 官方半自动拆件（AI 裁剪/填充/扩展，非扩散模型） | 需 Photoshop 2024/2025 + PRO 许可（42 天试用期内可用），质量上限最高的人工路线 |
+| [Anime2.5DRig](https://852wa.github.io/Anime2.5DRig/) | 浏览器把分层 PSD 直接变成会眨眼/口型/头发物理的 2.5D 形象 | 免安装快速预览拆件质量；图层命名兼容 see-through 输出 |
+| [PNGAL](https://github.com/1mm-module/PNGAL) | Windows 一键：PNG → see-through 拆 PSD → 眨眼/口型/摇摆 → 导出 PSD/WebM/GIF/精灵表 | 自带便携 Python + ComfyUI + 模型全家桶，参考其工程化做法 |
+| [Eikanya/Live2d-model](https://github.com/Eikanya/Live2d-model) | 3400+ 游戏提取的 Live2d-model 模型库 | 参考商业模型的参数/物理结构（注意 LICENSE，勿商用） |
+
+> see-through 官方自评：**不是完整 Image-to-Live2D**（绑定/艺术意图未覆盖），但作为「拆件+补画」起点可省掉最繁琐的人工部分——与 PSD2Live 组合正好补全链条。
+
+## 三、推荐路线（混合方案，成本最低）
+
+1. **学习期（立即可做，全免费）**：下载官方 Haru cmo3 源 + receptionist 教学 PSD，用 FREE 版 Editor 打开研究结构；跟官方 6 课教程（Hiyori 素材）
+2. **素材底图（进行中）**：v10 批次迭代到三视图定稿（批次 5 的 [sia_3v10_apron_00018_.png](file:///e:/self_project/Sia-ai/sia_out/sia_3v10_apron_00018_.png) 接近合格；批次 6 动 IPAdapter end_at 治发长）
+3. **拆件**：定稿图喂 see-through（本地 NF4 量化 / ModelScope 在线）→ 23 层分层 PSD → 层名对齐 PSD2Live 命名规范（含遮挡补画是自动的）
+4. **绑定**：PSD2Live 一键生成初版（含眨眼/口型/点头/头发物理——对标 Haru 的四组发物理）→ 助手通过其 MCP 直接精修 → 导出 moc3/cmo3
+5. **接入**：导出的 model3.json 文件族替换前端 haru 目录——pixi-live2d-display 管线已通，换文件即完事
+6. **精修兜底**：质量不满意时，PSD2Live 导出的 cmo3 在 Cubism Editor PRO（42 天试用）手工精修，两条路互通
+
+## 四、待办（按顺序）
+
+- [ ] 下载官方 Haru cmo3 源文件 + receptionist 教学 PSD（学习素材）
+- [ ] 安装 PSD2Live（Windows 便携版）+ 通读其 PSD 命名规范
+- [ ] 三视图定稿（v10 批次继续，见 docs/13 批次记录）
+- [ ] see-through 拆件实测（先拿 00018 这类接近合格的图试跑，ModelScope 在线版零安装先行验证）
+- [ ] PSD2Live 自动绑定 → 导出 → 前端替换 haru 目录实测

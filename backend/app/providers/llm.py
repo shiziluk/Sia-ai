@@ -48,6 +48,13 @@ class OllamaProvider(LLMProvider):
                 messages=[{"role": m["role"], "content": m["content"]} for m in messages],
                 think=False,  # qwen3.5 默认开思考：答案进 thinking 字段导致 content 为空且极慢
                 keep_alive="30m",  # 保持常驻显存，避免同一轮多次调用间反复换载超时
+                # 2026-10-14 采样收紧：默认 temperature 0.8 偏激进，4B 模型会采样出
+                # "不许客栈当你的饭碗"级乱码缝合与自我模仿复读；收紧三项显著抑制。
+                options={
+                    "temperature": 0.55,
+                    "top_p": 0.85,
+                    "repeat_penalty": 1.15,
+                },
             )
             return resp["message"]["content"]
         except Exception as e:  # 连接失败/模型缺失统一抛 LLMError

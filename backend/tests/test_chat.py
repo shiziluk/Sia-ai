@@ -183,59 +183,63 @@ def test_enforce_bottom_line(level, resp, expected):
 
 
 # =====================================================================
-# 人格自检（强制分支不调用 LLM，LLM 分支用脚本化回复）
+# 确定性人格守卫（persona_guards 直测，无 LLM）+ 提示词润色（llm_polish_response）
 # =====================================================================
-def test_critique_level1_forced_no_llm_call(mock_llm):
-    out = chat.self_critique_response(mock_llm, "小叶，想你啦", "开心", False, "你好", 1)
-    assert out == "喂！谁准你让我这么说话的？回去重修礼仪课！"
-    assert mock_llm.calls == []  # 强制替换发生在 LLM 审查之前
+def test_guard_level1_forced():
+    out = chat.persona_guards("小叶，想你啦", "你好", 1)
+    assert out == "……名字不是你能叫的。我们没那么熟。"
 
 
-def test_critique_level2_forced(mock_llm):
-    out = chat.self_critique_response(mock_llm, "小叶…小叶…想你了", "开心", False, "你好", 2)
-    assert out == "切～少自作多情，我才没那么关心你呢！"
+def test_guard_level2_forced():
+    out = chat.persona_guards("小叶…小叶…想你了", "你好", 2)
+    assert out == "……想多了。饭做两人份，只是顺手。"
 
 
-def test_critique_ai_denial_forced(mock_llm):
-    out = chat.self_critique_response(mock_llm, "好吧。", "平静", False, "你只是个AI", 2)
-    assert out == "哼，那你去找真人好了！"
+def test_guard_ai_denial_forced():
+    # 2026-10-14 新逻辑：只拦"认怂"（冷漠承认没感情），克制回应不再被替换
+    out = chat.persona_guards("我只是个程序，没有感情。", "你只是个AI", 2)
+    assert out == "……原来在你眼里，我连真心都是假的吗。"
 
 
-def test_critique_ai_denial_already_angry_passes(mock_llm):
-    mock_llm.replies = ["OK"]
-    out = chat.self_critique_response(mock_llm, "哼，才不是呢！", "平静", False, "你只是个AI", 3)
-    assert out == "哼，才不是呢！"
+def test_guard_ai_denial_restrained_passes():
+    # 新人设"从不炸毛"：克制的受伤回应是合法的，不应被替换
+    out = chat.persona_guards("……原来在你眼里，我连真心都是假的吗？", "你只是个AI", 3)
+    assert out == "……原来在你眼里，我连真心都是假的吗？"
 
 
-def test_critique_too_long_forced_short(mock_llm):
-    long_reply = "这是一段特别长的回复" * 10  # 110 字 > 80
-    out = chat.self_critique_response(mock_llm, long_reply, "平静", False, "今天天气不错", 3)
-    assert out == "……说太多啦！总之听我的就对了，小笨蛋！"
+def test_guard_150_within_limit_kept():
+    """150 字以内不再拦截（2026-10-13 上限从 80 放宽到 150）。"""
+    long_reply = "这是一段特别长的回复" * 10  # 110 字
+    out = chat.persona_guards(long_reply, "今天天气不错", 3)
+    assert out == long_reply
 
 
-def test_critique_too_long_intro_variant(mock_llm):
-    long_reply = "很长" * 50
-    out = chat.self_critique_response(mock_llm, long_reply, "平静", False, "介绍一下你自己", 3)
-    assert out == "希亚。……才不是特意等你问的！"
+def test_guard_overlong_truncated_at_sentence():
+    """超 150 字：在句末标点边界截断，保留内容，不再整条替换成预制台词。"""
+    unit = "今天天气很好我们一起出去玩吧。"  # 14 字
+    long_reply = unit * 12  # 168 字 > 150
+    out = chat.persona_guards(long_reply, "今天天气不错", 3)
+    assert out == unit * 10  # 截到最后一个句号（140 字）
+    assert len(out) <= 150
 
 
-def test_critique_llm_rewrite(mock_llm):
+def test_guard_overlong_no_punct_hard_cut():
+    """无句末标点时硬截并加省略号。"""
+    long_reply = "很长" * 90  # 180 字，无标点
+    out = chat.persona_guards(long_reply, "今天天气不错", 3)
+    assert out == "很长" * 75 + "……"
+
+
+def test_polish_rewrites(mock_llm):
+    """润色直接返回打磨文本（无 OK 判定，2026-10-14 新管线）。"""
     mock_llm.replies = ["切～本小姐才没有难过呢"]
-    out = chat.self_critique_response(mock_llm, "哦", "难过", False, "我有点难过", 3)
+    out = chat.llm_polish_response(mock_llm, "哦", "我有点难过", "难过", False)
     assert out == "切～本小姐才没有难过呢"
 
 
-def test_critique_ok_keeps_original(mock_llm):
-    mock_llm.replies = ["OK"]
-    out = chat.self_critique_response(mock_llm, "哼，知道了啦。", "平静", False, "你好", 3)
-    assert out == "哼，知道了啦。"
-
-
-def test_critique_llm_error_keeps_original():
-    out = chat.self_critique_response(
-        _RaisingProvider(), "正常回复", "平静", False, "你好", 3
-    )
-    assert out == "正常回复"
+def test_polish_llm_error_returns_none():
+    """润色失败返回 None（主管线用初稿）。"""
+    assert chat.llm_polish_response(_RaisingProvider(), "正常回复", "你好", "平静", False) is None
 
 
 # =====================================================================

@@ -10,7 +10,7 @@ import { storeToRefs } from 'pinia'
 const persona = usePersonaStore()
 const chat = useChatStore()
 const ui = useUiStore()
-const { enableCritique } = storeToRefs(ui)
+const { enablePolish } = storeToRefs(ui)
 
 // 表单：likes 等多值字段用逗号分隔字符串编辑
 const form = reactive({
@@ -188,16 +188,16 @@ async function doClearHistory(): Promise<void> {
               </ul>
             </section>
 
-            <!-- 人格自检开关（原侧边栏收编至此） -->
+            <!-- 回复润色开关（2026-10-14 新管线） -->
             <section class="section">
-              <h2>🪞 人格自检</h2>
+              <h2>✨ 回复润色</h2>
               <label class="critique-row">
-                <span>让希亚每句话后自我反省，回复更走心（略慢）</span>
+                <span>让希亚每句回复再打磨一遍语气，更像她本人（略慢）</span>
                 <input
-                  :checked="enableCritique"
+                  :checked="enablePolish"
                   type="checkbox"
                   class="critique-switch"
-                  @change="ui.toggleCritique"
+                  @change="ui.togglePolish"
                 />
               </label>
             </section>

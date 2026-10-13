@@ -4,7 +4,7 @@ from pydantic import BaseModel, Field
 
 class ChatRequest(BaseModel):
     text: str = Field(min_length=1, max_length=2000, description="用户消息")
-    enable_critique: bool = Field(default=True, description="是否启用人格自检")
+    enable_polish: bool = Field(default=True, description="提示词润色（2026-10-14 新管线：初步回复后按人设提示词打磨语气，默认开）")
 
 
 class ChatReply(BaseModel):

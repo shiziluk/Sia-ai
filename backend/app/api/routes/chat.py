@@ -23,7 +23,7 @@ def send_message(
     """发送一条用户消息，走完整对话流水线。"""
     try:
         result = chat_service.process_message(
-            db, llm, memory, body.text, enable_critique=body.enable_critique
+            db, llm, memory, body.text, enable_polish=body.enable_polish
         )
     except LLMError as e:
         raise HTTPException(status_code=502, detail=str(e)) from e

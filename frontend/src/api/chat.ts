@@ -12,9 +12,9 @@ export function getChatHistory(limit = 100): Promise<HistoryItem[]> {
 }
 
 /** 发送消息 */
-export function sendChat(text: string, enableCritique: boolean): Promise<ChatResponse> {
+export function sendChat(text: string, enablePolish: boolean): Promise<ChatResponse> {
   return http
-    .post<ChatResponse>('/chat', { text, enable_critique: enableCritique })
+    .post<ChatResponse>('/chat', { text, enable_polish: enablePolish })
     .then((r) => r.data)
 }
 

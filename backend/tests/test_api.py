@@ -73,11 +73,81 @@ def test_chat_empty_text_422(client):
     assert resp.status_code == 422  # Pydantic min_length=1
 
 
-def test_chat_critique_switch(client, mock_llm):
-    # enable_critique=False 时不发起人格审查调用
-    client.post("/api/chat", json={"text": "你好", "enable_critique": False})
-    critique_calls = [c for c in mock_llm.calls if "人格审查员" in c[0]["content"]]
-    assert critique_calls == []
+def test_chat_polish_switch(client, mock_llm):
+    # enable_polish=False 时不发起润色调用
+    client.post("/api/chat", json={"text": "你好", "enable_polish": False})
+    polish_calls = [c for c in mock_llm.calls if "语气打磨师" in c[0]["content"]]
+    assert polish_calls == []
+
+
+def test_chat_polish_applied(client, mock_llm, monkeypatch):
+    """新管线（2026-10-14）：初步回复 → 提示词润色 → 输出润色文本。"""
+    orig = type(mock_llm).chat
+
+    def scripted(self, messages):
+        head = messages[0]["content"]
+        if "语气打磨师" in head:
+            return "哼，知道啦～本小姐今天心情好。"
+        if _is_main_reply(messages):
+            return "你好。"
+        return orig(self, messages)
+
+    monkeypatch.setattr(type(mock_llm), "chat", scripted)
+    resp = client.post("/api/chat", json={"text": "你好", "enable_polish": True})
+    assert resp.status_code == 200
+    assert resp.json()["reply"] == "哼，知道啦～本小姐今天心情好。"
+
+
+def test_chat_polish_fail_falls_back_to_draft(client, mock_llm, monkeypatch):
+    """润色调用 LLMError → 用初稿（润色失败不影响出话）。"""
+    orig = type(mock_llm).chat
+
+    def scripted(self, messages):
+        head = messages[0]["content"]
+        if "语气打磨师" in head:
+            raise LLMError("润色通道挂了")
+        if _is_main_reply(messages):
+            return "你好。"
+        return orig(self, messages)
+
+    monkeypatch.setattr(type(mock_llm), "chat", scripted)
+    resp = client.post("/api/chat", json={"text": "你好", "enable_polish": True})
+    assert resp.status_code == 200
+    assert resp.json()["reply"] == "你好。"
+
+
+def test_persona_guards_run_even_without_polish(client, mock_llm, monkeypatch):
+    """守卫恒开（2026-10-14）：enable_polish=False 时守卫命中直接预制台词兜底。"""
+    orig = type(mock_llm).chat
+
+    def scripted(self, messages):
+        if _is_main_reply(messages):
+            return "我只是个程序，没有感情。"  # 认怂 → 新逻辑守卫命中
+        return orig(self, messages)
+
+    monkeypatch.setattr(type(mock_llm), "chat", scripted)
+    resp = client.post("/api/chat", json={"text": "你只是个AI", "enable_polish": False})
+    assert resp.status_code == 200
+    assert resp.json()["reply"] == "……原来在你眼里，我连真心都是假的吗。"
+    # 润色确实没发生
+    assert [c for c in mock_llm.calls if "语气打磨师" in c[0]["content"]] == []
+
+
+def test_guard_fallback_after_polish(client, mock_llm, monkeypatch):
+    """守卫兜底恒开：润色后的回复仍违规 → 预制台词兜底。"""
+    orig = type(mock_llm).chat
+
+    def scripted(self, messages):
+        head = messages[0]["content"]
+        if "语气打磨师" in head:
+            return "笨蛋小叶，本小姐想你啦！"  # Level 1 违规词 → 守卫兜底替换
+        if _is_main_reply(messages):
+            return "你好。"
+        return orig(self, messages)
+
+    monkeypatch.setattr(type(mock_llm), "chat", scripted)
+    resp = client.post("/api/chat", json={"text": "你好", "enable_polish": True})
+    assert resp.json()["reply"] == "……名字不是你能叫的。我们没那么熟。"
 
 
 def test_chat_llm_error_502(client, monkeypatch):
@@ -89,6 +159,53 @@ def test_chat_llm_error_502(client, monkeypatch):
     monkeypatch.setattr("app.services.chat.process_message", boom)
     resp = client.post("/api/chat", json={"text": "你好"})
     assert resp.status_code == 502
+
+
+def _is_main_reply(messages):
+    """主回复调用的 system 是人设提示；排除情绪/记忆/润色三个辅助调用。"""
+    head = messages[0]["content"]
+    return not any(k in head for k in ("情绪观察者", "记忆管家", "语气打磨师"))
+
+
+def test_chat_empty_reply_retried_then_ok(client, mock_llm, monkeypatch):
+    """显存挤压场景：ollama 200 返回空 content → 重试一次应恢复。"""
+    calls = {"n": 0}
+    orig = type(mock_llm).chat
+
+    def scripted(self, messages):
+        if _is_main_reply(messages):
+            calls["n"] += 1
+            return "" if calls["n"] == 1 else "哼，吓我一跳。"
+        return orig(self, messages)
+
+    monkeypatch.setattr(type(mock_llm), "chat", scripted)
+    resp = client.post("/api/chat", json={"text": "你好", "enable_polish": False})
+    assert resp.status_code == 200
+    assert resp.json()["reply"] == "哼，吓我一跳。"
+    assert calls["n"] >= 2  # 至少经历「空回复 + 重试」两次主回复调用
+
+
+def test_chat_empty_reply_502_and_nothing_saved(client, mock_llm, monkeypatch):
+    """重试仍为空 → 502，且用户消息/回复都不入库（杜绝空气泡）。"""
+    from app.db.database import SessionLocal
+    from app.db.models import Message
+
+    orig = type(mock_llm).chat
+
+    def scripted(self, messages):
+        if _is_main_reply(messages):
+            return ""  # 重试也空
+        return orig(self, messages)
+
+    monkeypatch.setattr(type(mock_llm), "chat", scripted)
+    resp = client.post("/api/chat", json={"text": "你好", "enable_polish": False})
+    assert resp.status_code == 502
+
+    s = SessionLocal()
+    try:
+        assert s.query(Message).count() == 0
+    finally:
+        s.close()
 
 
 # =====================================================================

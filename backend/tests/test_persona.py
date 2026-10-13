@@ -29,7 +29,7 @@ def test_character_prompt_contains_profile():
     p = persona.generate_character_system_prompt()
     assert "希亚" in p
     assert "千年旅者" in p
-    assert "嘴不饶人" in p
+    assert "古灵精怪" in p  # 2026-10-14 去傲娇化后的核心特质关键词
     assert "开玩笑的～" in p  # speech_patterns
     assert "我找到你了" in p
 

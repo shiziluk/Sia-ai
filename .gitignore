@@ -22,6 +22,9 @@ backend/data/
 # 历史留档（只读参考，不进 Git）
 _legacy/
 
+# Live2D 学习素材（官方 cmo3/PSD 大体积二进制，173MB，不进 Git）
+live2d_study/
+
 # IDE / 系统
 .idea/
 .vscode/

@@ -2,7 +2,7 @@ import { defineStore } from 'pinia'
 import { ref } from 'vue'
 
 const THEME_KEY = 'xia-theme'
-const CRITIQUE_KEY = 'xia-critique'
+const POLISH_KEY = 'xia-polish'
 const TTS_KEY = 'xia-tts'
 const RENDER_KEY = 'xia-render'
 
@@ -20,8 +20,8 @@ export const useUiStore = defineStore('ui', () => {
   // 覆层：历史 / 面板 / 设置（互斥）
   const overlay = ref<OverlayKind>('none')
 
-  // 人格自检开关（随 POST /api/chat 传给后端），默认开启
-  const enableCritique = ref(localStorage.getItem(CRITIQUE_KEY) !== '0')
+  // 回复润色开关（随 POST /api/chat 传给后端），默认开启（2026-10-14 新管线：初步回复 → 提示词润色）
+  const enablePolish = ref(localStorage.getItem(POLISH_KEY) !== '0')
 
   // 语音回复开关（TTS），默认开启
   const ttsEnabled = ref(localStorage.getItem(TTS_KEY) !== '0')
@@ -42,9 +42,9 @@ export const useUiStore = defineStore('ui', () => {
     theme.value = isNight ? 'night' : 'day'
   }
 
-  function toggleCritique(): void {
-    enableCritique.value = !enableCritique.value
-    localStorage.setItem(CRITIQUE_KEY, enableCritique.value ? '1' : '0')
+  function togglePolish(): void {
+    enablePolish.value = !enablePolish.value
+    localStorage.setItem(POLISH_KEY, enablePolish.value ? '1' : '0')
   }
 
   function openOverlay(kind: Exclude<OverlayKind, 'none'>): void {
@@ -69,12 +69,12 @@ export const useUiStore = defineStore('ui', () => {
     theme,
     themeLocked,
     overlay,
-    enableCritique,
+    enablePolish,
     ttsEnabled,
     useLive2d,
     toggleTheme,
     syncThemeWithServer,
-    toggleCritique,
+    togglePolish,
     openOverlay,
     closeOverlay,
     toggleTts,

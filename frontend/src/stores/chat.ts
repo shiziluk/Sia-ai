@@ -73,7 +73,7 @@ export const useChatStore = defineStore('chat', () => {
     messages.value.push({ id: nextId++, role: 'user', content: trimmed, time: nowHM() })
     sending.value = true
     try {
-      const res = await sendChat(trimmed, ui.enableCritique)
+      const res = await sendChat(trimmed, ui.enablePolish)
       messages.value.push({
         id: nextId++,
         role: 'assistant',
