@@ -46,6 +46,8 @@ class OllamaProvider(LLMProvider):
             resp = client.chat(
                 model=settings.ollama_model,
                 messages=[{"role": m["role"], "content": m["content"]} for m in messages],
+                think=False,  # qwen3.5 默认开思考：答案进 thinking 字段导致 content 为空且极慢
+                keep_alive="30m",  # 保持常驻显存，避免同一轮多次调用间反复换载超时
             )
             return resp["message"]["content"]
         except Exception as e:  # 连接失败/模型缺失统一抛 LLMError

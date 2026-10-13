@@ -25,6 +25,8 @@ export type IconName =
   | 'send'
   | 'user'
   | 'stop'
+  | 'chevronDown'
+  | 'messageCircle'
 </script>
 
 <template>
@@ -90,6 +92,12 @@ export type IconName =
     </template>
     <template v-else-if="name === 'stop'">
       <rect x="7" y="7" width="10" height="10" rx="1.5" />
+    </template>
+    <template v-else-if="name === 'chevronDown'">
+      <path d="m6 9 6 6 6-6" />
+    </template>
+    <template v-else-if="name === 'messageCircle'">
+      <path d="M7.9 20A9 9 0 1 0 4 16.1L2 22Z" />
     </template>
   </svg>
 </template>

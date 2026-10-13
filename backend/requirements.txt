@@ -7,9 +7,9 @@ sqlalchemy==2.0.35
 chromadb==0.5.5
 # LLM 双通道
 httpx==0.27.2          # 在线通道（dashscope HTTP 直调）+ 通用 HTTP
-ollama==0.3.3          # 本地通道（Ollama 官方 SDK）
+ollama==0.6.3          # 本地通道（Ollama 官方 SDK）；0.6+ 才支持 think=False 关闭 qwen3.5 思考模式
 # 语音
-edge-tts==6.1.12       # 文字转语音（沿用 V13）
+edge-tts==7.2.8        # 文字转语音（V13 沿用）；注：微软 2026-10-10 起对免费端点改验证逻辑，当前全局 403，待迁移音色克隆方案
 vosk==0.3.45           # 语音识别（模型文件另下，不入 Git）
 python-multipart==0.0.9
 # 测试

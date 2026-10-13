@@ -52,7 +52,7 @@ export default defineConfig({
     // 把 /api 转发到本地 FastAPI 后端，免 CORS
     proxy: {
       '/api': {
-        target: 'http://127.0.0.1:8900',
+        target: 'http://127.0.0.1:8000',
         changeOrigin: true
       }
     }

@@ -336,7 +336,7 @@ def test_ollama_provider_chat_and_health(monkeypatch):
         def __init__(self, host=None, timeout=None):
             pass
 
-        def chat(self, model, messages):
+        def chat(self, model, messages, **kwargs):
             return {"message": {"content": "本地回复"}}
 
         def list(self):
@@ -355,7 +355,7 @@ def test_ollama_provider_failure(monkeypatch):
         def __init__(self, host=None, timeout=None):
             pass
 
-        def chat(self, model, messages):
+        def chat(self, model, messages, **kwargs):
             raise RuntimeError("down")
 
         def list(self):

@@ -34,7 +34,7 @@ class Settings(BaseSettings):
     data_dir: str = "./data"
 
     # ---- 语音 ----
-    tts_voice: str = "zh-CN-XiaoyiNeural"
+    tts_voice: str = "zh-CN-XiaoxiaoNeural"  # 晓晓：edge-tts 最自然的中文女声
     vosk_model_path: str = "./models/vosk-model-cn-0.22"
     ffmpeg_path: str = "ffmpeg"
 

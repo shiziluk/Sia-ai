@@ -31,6 +31,9 @@ watch(
 const draft = ref('')
 const inputEl = ref<HTMLTextAreaElement | null>(null)
 
+/** 对话框收起态：true 时面板隐藏，仅剩右上角小圆钮可点回 */
+const collapsed = ref(false)
+
 // 底部轻提示（录音错误等）
 const toast = ref('')
 let toastTimer: number | undefined
@@ -92,54 +95,66 @@ watch(draft, () => {
 </script>
 
 <template>
-  <div class="dialog-box">
-    <!-- 名牌 -->
-    <div class="dialog-name">
-      希亚
+  <div class="dialog-box" :class="{ 'dialog-box--collapsed': collapsed }">
+    <!-- 收起/展开开关：与名牌对称悬浮于右上角 -->
+    <button
+      class="dialog-toggle"
+      type="button"
+      :title="collapsed ? '展开对话框' : '收起对话框'"
+      @click="collapsed = !collapsed"
+    >
+      <SiaIcon :name="collapsed ? 'messageCircle' : 'chevronDown'" :size="16" />
+    </button>
+
+    <template v-if="!collapsed">
+      <!-- 名牌 -->
+      <div class="dialog-name">
+        希亚
+        <Transition name="fade">
+          <span v-if="speaking" class="dialog-name__speaking">🔊 说话中…</span>
+        </Transition>
+      </div>
+
+      <!-- 回复正文：打字机 -->
+      <div class="dialog-text" :class="{ 'dialog-text--skipable': typing }" @click="onTextClick">
+        <template v-if="chat.sending">
+          <span class="dots"><i></i><i></i><i></i></span>
+        </template>
+        <template v-else>{{ typedText }}</template>
+      </div>
+
+      <!-- TTS 被拦截的兜底胶囊 -->
       <Transition name="fade">
-        <span v-if="speaking" class="dialog-name__speaking">🔊 说话中…</span>
+        <button v-if="ttsBlocked" class="tts-capsule" type="button" @click="emit('play-tts')">
+          🔊 点此播放语音
+        </button>
       </Transition>
-    </div>
 
-    <!-- 回复正文：打字机 -->
-    <div class="dialog-text" :class="{ 'dialog-text--skipable': typing }" @click="onTextClick">
-      <template v-if="chat.sending">
-        <span class="dots"><i></i><i></i><i></i></span>
-      </template>
-      <template v-else>{{ typedText }}</template>
-    </div>
-
-    <!-- TTS 被拦截的兜底胶囊 -->
-    <Transition name="fade">
-      <button v-if="ttsBlocked" class="tts-capsule" type="button" @click="emit('play-tts')">
-        🔊 点此播放语音
-      </button>
-    </Transition>
-
-    <!-- 输入行 -->
-    <div class="dialog-input">
-      <button
-        class="mic-btn"
-        :class="{ 'mic-btn--rec': recording }"
-        type="button"
-        :disabled="busy"
-        :title="recording ? '停止并识别' : '点一下开始录音'"
-        @click="toggle"
-      >
-        <SiaIcon :name="recording ? 'stop' : 'mic'" />
-      </button>
-      <textarea
-        ref="inputEl"
-        v-model="draft"
-        class="dialog-input__field"
-        rows="1"
-        placeholder="和希亚说点什么…（Enter 发送）"
-        @keydown="onKeydown"
-      ></textarea>
-      <button class="send-btn" type="button" :disabled="chat.sending || !draft.trim()" @click="send">
-        <SiaIcon name="send" />
-      </button>
-    </div>
+      <!-- 输入行 -->
+      <div class="dialog-input">
+        <button
+          class="mic-btn"
+          :class="{ 'mic-btn--rec': recording }"
+          type="button"
+          :disabled="busy"
+          :title="recording ? '停止并识别' : '点一下开始录音'"
+          @click="toggle"
+        >
+          <SiaIcon :name="recording ? 'stop' : 'mic'" />
+        </button>
+        <textarea
+          ref="inputEl"
+          v-model="draft"
+          class="dialog-input__field"
+          rows="1"
+          placeholder="和希亚说点什么…（Enter 发送）"
+          @keydown="onKeydown"
+        ></textarea>
+        <button class="send-btn" type="button" :disabled="chat.sending || !draft.trim()" @click="send">
+          <SiaIcon name="send" />
+        </button>
+      </div>
+    </template>
 
     <Transition name="fade">
       <div v-if="toast" class="toast">{{ toast }}</div>
@@ -157,6 +172,42 @@ watch(draft, () => {
   border: 1px solid var(--border);
   box-shadow: var(--shadow);
   padding: 14px 18px calc(12px + env(safe-area-inset-bottom));
+}
+
+/* ---- 收起/展开开关 ---- */
+.dialog-toggle {
+  position: absolute;
+  top: -14px;
+  right: 18px;
+  z-index: 2;
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  border: 1px solid var(--border);
+  background: var(--card);
+  color: var(--text);
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: var(--shadow);
+  transition: border-color 0.18s ease, color 0.18s ease, transform 0.18s ease;
+}
+
+.dialog-toggle:hover {
+  border-color: var(--cyber);
+  color: var(--cyber);
+  transform: translateY(-1px);
+}
+
+/* 收起态：面板消失，只留小圆钮，不再遮挡立绘点击 */
+.dialog-box--collapsed {
+  width: auto;
+  background: transparent;
+  border-color: transparent;
+  box-shadow: none;
+  backdrop-filter: none;
+  padding: 0;
 }
 
 /* ---- 名牌 ---- */
