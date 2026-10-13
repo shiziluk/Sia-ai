@@ -119,4 +119,12 @@
 **一句话总结**：鬼图上前端 = 跳步的输入（原因2）× 没闸门的流程（原因4）× 被忽视的警告（原因3），三者叠加后经由错误测试方式（原因1）触达用户，且残留目录（原因5）险些构成复发源。五条防线全部落地后，同型事故不应再发生。
 
 ### 预览页
-- [x] live2d_study/preview.html 已建（pixi-live2d-display CDN + 目录选择 + Blob URL 相对引用改写）。用法：`npx serve live2d_study` 起静态服务 → 浏览器打开 preview.html → 选择待检模型目录 → 自检眨眼/点头/拖拽。**注意 file:// 下 fetch 受限，必须经 HTTP 打开**
+- [x] live2d_study/selfcheck.html 为唯一出厂自检工具（已闭环验证可用；参数化 `?v=N&dir=模型目录` + `window.__CHECK__` 程序化断言 + 截图判定）。曾另建的 preview.html（CDN 老库版）与它重复且带同样的三个坑，已删除避免混淆
+- [x] live2d_study/lib/ 存有与前端一致的库副本（cubismcore + pixi 8 + cubism4 子包）；ghost_sample.png 为鬼图问题基线样本（仅留档）
+
+## 六、下次开工清单（2026-10-15 起，按顺序）
+1. **批次 7 出图**（对策已定，见 docs/13）：正面白裤袜提权 1.35、负面补 ragged hem/torn cloth/拖尾 → 出完按 docs/13 流程读图分析记档 → 目标拿到三视图定稿
+2. **see-through 拆件实测**：拿最接近合格的定稿图先走 ModelScope 在线版（零安装）验证拆件质量，本地 NF4 管线备用
+3. **PSD2Live 绑定**：输入 = see-through 规范命名 PSD → **先审绑定日志（警告即不合格）** → 导出
+4. **selfcheck 自检**：`python -m http.server 8899`（在 live2d_study 下）→ 浏览器 `selfcheck.html?v=N&dir=产出目录` 截图判定（完整人物/无头黑块/无重影/无错位，四条全过）→ **用户确认后才许**替换前端模型目录
+5. 聊天侧长期观察：9b 漏网句攒样本随时补；用户画像靠真实聊天自然积累（勿再造假占位数据）
