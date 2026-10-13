@@ -76,10 +76,35 @@
 - 根因：跳过了"三视图定稿 → see-through 拆件（规范命名 23 层）"这两步前置，直接拿教学 PSD 试绑定
 - 处置：MODEL_URL 已回滚 Haru、public 下的测试模型已删除
 
+### 🔬 鬼图根因实锤（2026-10-14 深夜自检页闭环复测，用户零暴露）
+1. **重跑绑定产出 → 自检页截图**：loaded 成功但渲染确认崩坏——头部黑色团块缺失、
+   双臂重影（多只手臂）、裙摆腿部错位（问题样本存 live2d_study/ghost_sample.png，
+   仅留档不外显）
+2. **根因链 = 喂错料，不是工具坏**：
+   - 教学 PSD 的层结构（日文层名/同名影子层组/缺 face 层）不符合 PSD2Live 的
+     PSD_LAYER_SPEC 规范 → 同名"影"层被当成独立部件重复绑定 → **肢体重影**
+   - 面部层与头发层范围交叠 + 隐藏 Drawable 被 MOC3 导出省略（绑定日志两条警告）
+     → **头部 mesh 缺失成黑块**
+   - 三个警告在绑定日志里全部出现过，当时未足够重视——**绑定日志的警告=鬼图前兆，
+     以后绑定完先审日志再截图**
+3. **自检工具链踩坑三连修**（selfcheck.html 最终可用版）：
+   - ① 库版本必须与前端一致：`@jannchie/pixi-live2d-display` + pixi.js 8
+     （CDN 上的 pixi-live2d-display@0.4.0 是老版配 pixi 7，不通用）；
+     lib 副本已存 live2d_study/lib/
+   - ② 只能用 `cubism4.min.js` 子包——主入口 index.min.js 强制依赖 Cubism 2
+     runtime，纯浏览器加载后 PIXI.live2d 是空壳（前端 Live2dStage.vue 注释早有提醒）
+   - ③ **UMD 里引用 `process.env.NODE_ENV`，纯浏览器无 process 直接 ReferenceError
+     崩掉整库**——必须在加载前垫 `window.process = { env: { NODE_ENV: 'production' } }`
+     （vite 项目里 npm import 时被 define 替换所以从没暴露过）
+   - 初始化写法 pixi 8：`new Application()` + `await init()` + `app.canvas`
+4. **自检闭环验证有效**：本轮鬼图完全被隔离在自检页内，未触达用户页面——固化规则
+   第一条的价值已实证
+
 ### 📌 固化规则（用户指示，每次生成模型后必须执行）
-1. **生成后必检**：新模型渲染结果必须先在隔离预览环境确认是正常图（不是鬼图/贴图错乱/层序崩坏）
+0. **先审绑定日志**：绑定日志里出现"缺 face 图层/同名图层/MOC3 隐藏层省略"类警告 = 鬼图前兆，直接判不合格重做上游（拆件质量），不进截图环节
+1. **生成后必检**：新模型渲染结果必须先在隔离预环境（selfcheck.html）确认是正常图——**判定标准：完整人物、无头部黑块、无肢体/部件重影、无结构错位**；确认正常前绝不展现给用户，也绝不改前端 MODEL_URL
 2. **不正常 → 查问题 → 留档到本节 → 删掉产出 → 重新生成**，与 docs/13 生图批次规则同构
-3. **隔离预览**：用独立 HTML 预览页（pixi-live2d-display 直载本地 model3.json）自检，**禁止直接改主配置 MODEL_URL**——热更新会让崩坏模型直接出现在用户页面上（本次教训）
+3. **隔离预览**：selfcheck.html（live2d_study 下，`python -m http.server 8899` 后访问 `?v=N&dir=模型目录`）——**禁止直接改主配置 MODEL_URL**（热更新会让崩坏模型直接出现在用户页面上，已实证两次）
 4. 自检通过才允许替换前端模型目录
 
 ### 预览页
