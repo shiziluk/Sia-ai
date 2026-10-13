@@ -57,8 +57,30 @@
 
 ## 四、待办（按顺序）
 
-- [ ] 下载官方 Haru cmo3 源文件 + receptionist 教学 PSD（学习素材）
-- [ ] 安装 PSD2Live（Windows 便携版）+ 通读其 PSD 命名规范
+- [x] 下载官方 Haru cmo3 源文件 + receptionist 教学 PSD（学习素材）——已存 live2d_study/haru*（含 41.9MB 部件拆分教学 PSD）
+- [x] 安装 PSD2Live（Windows 便携版）+ 通读其 PSD 命名规范——v3.4.4 已解压 live2d_study/tools/psd2live（CLI 可用，中文乱码但参数齐全）
 - [ ] 三视图定稿（v10 批次继续，见 docs/13 批次记录）
 - [ ] see-through 拆件实测（先拿 00018 这类接近合格的图试跑，ModelScope 在线版零安装先行验证）
-- [ ] PSD2Live 自动绑定 → 导出 → 前端替换 haru 目录实测
+- [ ] PSD2Live 自动绑定 → 导出 → **隔离预览自检通过后** → 前端替换 haru 目录
+
+## 五、初步尝试实录（2026-10-14）
+
+### ✅ 验证通过的环节
+- PSD2Live CLI 一次跑通官方教学 PSD（haru_受付スーツ_素材分け_t07.psd，41.9MB）：
+  产出 13 文件 = moc3(945KB) + cmo3(43MB，可回官方编辑器精修) + cdi3/physics3 + 4 组动作（idle/blink/nod/shake）+ atlas 8192×2 页
+- model3.json 结构标准（EyeBlink/LipSync 组齐全），pixi-live2d-display 兼容性理论无问题
+
+### ❌ 渲染"鬼图"问题（用户实机发现，已回滚）
+- 现象：切 MODEL_URL 热更新到前端后渲染崩坏成鬼图
+- 直接原因：教学 PSD 是给人看层结构的参考件，层名日文+非规范结构——PSD2Live 已警告"缺 face 图层/检测到同名图层/MOC3 隐藏层被省略"，对非 see-through 命名规范的 PSD 自动绑定质量不可用
+- 根因：跳过了"三视图定稿 → see-through 拆件（规范命名 23 层）"这两步前置，直接拿教学 PSD 试绑定
+- 处置：MODEL_URL 已回滚 Haru、public 下的测试模型已删除
+
+### 📌 固化规则（用户指示，每次生成模型后必须执行）
+1. **生成后必检**：新模型渲染结果必须先在隔离预览环境确认是正常图（不是鬼图/贴图错乱/层序崩坏）
+2. **不正常 → 查问题 → 留档到本节 → 删掉产出 → 重新生成**，与 docs/13 生图批次规则同构
+3. **隔离预览**：用独立 HTML 预览页（pixi-live2d-display 直载本地 model3.json）自检，**禁止直接改主配置 MODEL_URL**——热更新会让崩坏模型直接出现在用户页面上（本次教训）
+4. 自检通过才允许替换前端模型目录
+
+### 预览页
+- [x] live2d_study/preview.html 已建（pixi-live2d-display CDN + 目录选择 + Blob URL 相对引用改写）。用法：`npx serve live2d_study` 起静态服务 → 浏览器打开 preview.html → 选择待检模型目录 → 自检眨眼/点头/拖拽。**注意 file:// 下 fetch 受限，必须经 HTTP 打开**
