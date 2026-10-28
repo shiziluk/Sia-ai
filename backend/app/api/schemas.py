@@ -21,6 +21,10 @@ class MemoryCreate(BaseModel):
 class TTSRequest(BaseModel):
     text: str = Field(min_length=1, max_length=1000)
     voice: str | None = None
+    # 好感度档位（1-4）。不传则由后端从 DB 的 PersonalityState 解析（前端无需改动）。
+    intimacy_level: int | None = Field(default=None, ge=1, le=4, description="好感度档位")
+    # 语言：zh（中文模式，底模 GPT）| ja（日文模式，微调 GPT）。默认 zh。
+    lang: str | None = Field(default=None, pattern="^(zh|ja)$", description="合成语言")
 
 
 class STTRequest(BaseModel):
