@@ -30,6 +30,23 @@ live2d_study/
 .vscode/
 Thumbs.db
 
+# GPT-SoVITS 语音引擎（10GB+ 整合包/解压产物/模型/音频，仅本地，不进 Git）
+GPT-SoVITS/*
+# 例外：语音管线脚本（纯文本小体积，需进 Git；7zr.exe 与 __pycache__ 仍排除）
+!GPT-SoVITS/tools/
+GPT-SoVITS/tools/7zr.exe
+GPT-SoVITS/tools/__pycache__/
+
+# RVC 变声引擎（整合包 + 训练切片 + 运行日志，仅本地，不进 Git）
+RVC/
+
+# 智能体工作记忆（会话级，仅本地，不进 Git）
+.workbuddy/
+
+# 运行日志
+_gw_*.log
+_video_move_log.txt
+
 # 出图中间产物（ComfyUI/SD 步骤图与临时预览，不进 Git）
 sia_out/
 _tmp_*.py

@@ -1,0 +1,190 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>摩耶 SoVITS 微调 · 实时监控</title>
+<style>
+:root {
+  --bg: #F5F6F7; --surface: #FFFFFF; --muted-surface: #F0F1F3;
+  --text: #17181A; --text-2: #5C6168; --text-3: #9BA0A6;
+  --border: #E4E6E9;
+  --brand: #0FDC78; --brand-deep: #02743B; --brand-soft: #E7FFF3; --brand-text: #00622F;
+  --warn: #F5A623;
+  --radius: 12px;
+  --mono: "JetBrains Mono", ui-monospace, Consolas, "Courier New", monospace;
+  --sans: -apple-system, "Segoe UI", "PingFang SC", "Microsoft YaHei", sans-serif;
+}
+@media (prefers-color-scheme: dark) {
+  :root {
+    --bg: #121417; --surface: #1B1E22; --muted-surface: #23262B;
+    --text: #E8EAED; --text-2: #A6ACB3; --text-3: #6B7178;
+    --border: #2C3036;
+    --brand: #32F08C; --brand-deep: #32F08C; --brand-soft: #0B2B1B; --brand-text: #7CFFBE;
+  }
+}
+* { box-sizing: border-box; margin: 0; }
+body { background: var(--bg); color: var(--text); font: 15px/1.5 var(--sans); padding: 28px; }
+.wrap { max-width: 1080px; margin: 0 auto; display: grid; gap: 20px; }
+header { display: flex; align-items: center; justify-content: space-between; }
+h1 { font-size: 20px; font-weight: 600; }
+h1 small { color: var(--text-3); font-weight: 400; font-size: 13px; margin-left: 10px; }
+.badge { display: inline-flex; align-items: center; gap: 8px; padding: 6px 14px; border-radius: 999px; font-size: 13px; font-weight: 600; background: var(--brand-soft); color: var(--brand-text); }
+.badge .dot { width: 8px; height: 8px; border-radius: 999px; background: var(--brand); }
+@keyframes blink { 50% { opacity: .2; } }
+@media (prefers-reduced-motion: no-preference) { .badge.live .dot { animation: blink 1.4s ease-in-out infinite; } }
+.badge.stall { background: var(--muted-surface); color: var(--text-2); }
+.badge.stall .dot { background: var(--text-3); }
+.card { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); padding: 24px; }
+.hero { display: flex; align-items: flex-end; gap: 28px; flex-wrap: wrap; }
+.kpi { font: 700 56px/1 var(--mono); color: var(--brand-deep); font-variant-numeric: tabular-nums; }
+.kpi-sub { color: var(--text-2); font-size: 14px; padding-bottom: 8px; }
+.overall-bar { height: 14px; background: var(--muted-surface); border-radius: 999px; overflow: hidden; margin-top: 18px; }
+.overall-fill { height: 100%; width: 0%; background: var(--brand); border-radius: 999px; transition: width .8s linear; }
+.grid2 { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; }
+@media (max-width: 860px) { .grid2 { grid-template-columns: 1fr; } }
+h2 { font-size: 13px; font-weight: 600; color: var(--text-3); text-transform: uppercase; letter-spacing: .08em; margin-bottom: 16px; }
+.epoch { display: grid; grid-template-columns: 82px 1fr 190px; align-items: center; gap: 14px; padding: 10px 0; }
+.epoch + .epoch { border-top: 1px solid var(--border); }
+.epoch .name { font-weight: 600; font-size: 14px; color: var(--text-2); }
+.bar { height: 12px; background: var(--muted-surface); border-radius: 999px; overflow: hidden; position: relative; }
+.fill { height: 100%; width: 0%; background: var(--brand); border-radius: 999px; transition: width .8s linear; }
+.fill.done { background: var(--brand-deep); }
+.fill.idle { width: 0 !important; }
+@media (prefers-reduced-motion: no-preference) {
+  .fill.run { background-image: repeating-linear-gradient(45deg, var(--brand) 0 10px, color-mix(in srgb, var(--brand) 70%, transparent) 10px 20px); background-size: 28px 100%; animation: stripe .9s linear infinite; }
+  @keyframes stripe { from { background-position: 0 0; } to { background-position: 28px 0; } }
+}
+.readout { font: 13px var(--mono); color: var(--text-2); text-align: right; font-variant-numeric: tabular-nums; }
+.readout b { color: var(--text); font-weight: 600; }
+.stats { display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 12px; }
+.stat { background: var(--muted-surface); border-radius: 10px; padding: 14px 16px; }
+.stat .k { font-size: 12px; color: var(--text-3); margin-bottom: 4px; }
+.stat .v { font: 600 20px var(--mono); font-variant-numeric: tabular-nums; }
+.stat .v small { font-size: 12px; color: var(--text-2); font-weight: 400; }
+.miles { display: flex; flex-wrap: wrap; gap: 10px; }
+.chip { padding: 6px 14px; border-radius: 999px; border: 1px solid var(--border); font-size: 13px; color: var(--text-3); transition: all .3s; }
+.chip.on { background: var(--brand-soft); border-color: transparent; color: var(--brand-text); font-weight: 600; }
+.log { font: 12.5px/1.7 var(--mono); color: var(--text-2); white-space: pre-wrap; word-break: break-all; background: var(--muted-surface); border-radius: 10px; padding: 16px; max-height: 220px; overflow-y: auto; }
+.offline { display: none; background: #FFF4E5; color: #8A5A00; border-radius: 10px; padding: 12px 16px; font-size: 14px; }
+@media (prefers-color-scheme: dark) { .offline { background: #3A2E14; color: #F5C56B; } }
+footer { color: var(--text-3); font-size: 12.5px; text-align: center; }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <h1>摩耶 SoVITS 微调<small>GPT-SoVITS v2ProPlus · 1050Ti</small></h1>
+    <div class="badge live" id="badge"><span class="dot"></span><span id="badge-text">连接中…</span></div>
+  </header>
+
+  <div class="card">
+    <div class="hero">
+      <div class="kpi" id="kpi">--%</div>
+      <div class="kpi-sub" id="kpi-sub">等待数据…</div>
+    </div>
+    <div class="overall-bar"><div class="overall-fill" id="overall"></div></div>
+  </div>
+
+  <div class="card">
+    <h2>Epoch 进度</h2>
+    <div id="epochs"></div>
+  </div>
+
+  <div class="card">
+    <h2>运行状态</h2>
+    <div class="stats">
+      <div class="stat"><div class="k">速度</div><div class="v" id="s-speed">--</div></div>
+      <div class="stat"><div class="k">当前 Epoch</div><div class="v" id="s-epoch">--</div></div>
+      <div class="stat"><div class="k">GPU 利用率</div><div class="v" id="s-gpu">--</div></div>
+      <div class="stat"><div class="k">显存占用</div><div class="v" id="s-mem">--</div></div>
+      <div class="stat"><div class="k">全训完成 ETA</div><div class="v" id="s-eta">--</div></div>
+      <div class="stat"><div class="k">数据刷新</div><div class="v" id="s-ts">--</div></div>
+    </div>
+  </div>
+
+  <div class="card">
+    <h2>权重里程碑</h2>
+    <div class="miles" id="miles"></div>
+  </div>
+
+  <div class="card">
+    <h2>训练日志尾部</h2>
+    <div class="log" id="log">--</div>
+  </div>
+
+  <div class="offline" id="offline">监控服务离线（127.0.0.1:9881）— 训练进程独立运行不受影响，服务恢复后自动重连。</div>
+  <footer>2 秒轮询 · 由 train_progress_server.py 托管</footer>
+</div>
+
+<script>
+(function () {
+  var $ = function (id) { return document.getElementById(id); };
+  var PLANNED = 3, TOTAL = 751;
+  var epochEls = [], chipEls = [];
+  var chipLabels = ["e1 权重（已抢救）", "e2 权重 → 首版试听", "e3 权重"];
+  var ep = document.getElementById("epochs");
+  for (var i = 1; i <= PLANNED; i++) {
+    var row = document.createElement("div");
+    row.className = "epoch";
+    row.innerHTML = '<div class="name">Epoch ' + i + '</div><div class="bar"><div class="fill idle"></div></div><div class="readout"><b>--</b></div>';
+    ep.appendChild(row);
+    epochEls.push({ fill: row.querySelector(".fill"), readout: row.querySelector(".readout") });
+  }
+  var miles = document.getElementById("miles");
+  chipLabels.forEach(function (t) {
+    var c = document.createElement("span"); c.className = "chip"; c.textContent = t;
+    miles.appendChild(c); chipEls.push(c);
+  });
+  function clock(min) {
+    var d = new Date(Date.now() + min * 60000);
+    return String(d.getHours()).padStart(2, "0") + ":" + String(d.getMinutes()).padStart(2, "0");
+  }
+  function render(d) {
+    var cur = Math.min(d.current_epoch, PLANNED);
+    var doneSteps = (cur - 1) * TOTAL + d.step;
+    var all = PLANNED * TOTAL;
+    $("kpi").textContent = Math.round(doneSteps / all * 100) + "%";
+    $("kpi-sub").textContent = "总体 " + doneSteps + " / " + all + " step（" + PLANNED + " epoch × " + TOTAL + "）";
+    $("overall").style.width = (doneSteps / all * 100).toFixed(1) + "%";
+    for (var i = 1; i <= PLANNED; i++) {
+      var el = epochEls[i - 1], cls = "fill", pct = 0, txt;
+      if (i < cur || d.finished) { cls += " done"; pct = 100; txt = "100% · 完成"; }
+      else if (i === cur) { cls += " run"; pct = d.step / TOTAL * 100; txt = Math.round(pct) + "% · " + d.step + "/" + TOTAL; }
+      else { cls += " idle"; txt = "待跑"; }
+      el.fill.className = cls;
+      el.fill.style.width = pct.toFixed(1) + "%";
+      el.readout.innerHTML = "<b>" + txt + "</b>";
+    }
+    var st = [false, false, false];
+    (d.weights || []).forEach(function (w) { var m = w.match(/e(\d)\.pth$/); if (m) st[+m[1] - 1] = true; });
+    if (d.finished) st = [true, true, true];
+    chipEls.forEach(function (c, i) { c.className = st[i] ? "chip on" : "chip"; });
+    var badge = $("badge");
+    if (d.finished) { badge.className = "badge live"; $("badge-text").textContent = "训练完成"; }
+    else if (d.alive === false) { badge.className = "badge stall"; $("badge-text").textContent = "进度停滞"; }
+    else { badge.className = "badge live"; $("badge-text").textContent = "训练中 LIVE"; }
+    $("s-speed").textContent = d.speed ? d.speed.toFixed(1) + " s/step" : "--";
+    $("s-epoch").textContent = d.finished ? PLANNED + " / " + PLANNED : cur + " / " + PLANNED;
+    $("s-gpu").textContent = d.gpu && d.gpu.util !== null ? d.gpu.util + "%" : "--";
+    $("s-mem").textContent = d.gpu && d.gpu.mem ? d.gpu.mem + " MB" : "--";
+    $("s-eta").textContent = d.finished ? "已完成" : (d.eta_min ? clock(d.eta_min) : "--");
+    $("s-ts").textContent = d.ts || "--";
+    $("log").textContent = (d.log_tail || []).join("\n") || "--";
+    $("offline").style.display = "none";
+    document.title = Math.round(doneSteps / all * 100) + "% · 摩耶微调监控";
+  }
+  function poll() {
+    fetch("http://127.0.0.1:9881/progress").then(function (r) { return r.json(); })
+      .then(render)
+      .catch(function () {
+        $("offline").style.display = "block";
+        var b = $("badge"); b.className = "badge stall"; $("badge-text").textContent = "离线";
+      });
+  }
+  poll();
+  setInterval(poll, 2000);
+})();
+</script>
+</body>
+</html>

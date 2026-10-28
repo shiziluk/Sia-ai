@@ -123,6 +123,7 @@
 - [x] live2d_study/lib/ 存有与前端一致的库副本（cubismcore + pixi 8 + cubism4 子包）；ghost_sample.png 为鬼图问题基线样本（仅留档）
 
 ## 六、下次开工清单（2026-10-15 起，按顺序）
+> **2026-10-28 更新**：三视图路线已扩容——新增 Qwen-Image-Edit 编辑式路线（免费云端位）与现有 SDXL 管线双轨并进，本机实测 4GB 显存（1050 Ti）。详见 [docs/20_希亚Live2D推进方案_三视图新路线与Live2D教程调研.md](file:///f:/self_project/Sia-ai/docs/20_希亚Live2D推进方案_三视图新路线与Live2D教程调研.md)；拆件质量验收标准以 docs/20 §3.1 官方拆件规范为准。
 1. **批次 7 出图**（对策已定，见 docs/13）：正面白裤袜提权 1.35、负面补 ragged hem/torn cloth/拖尾 → 出完按 docs/13 流程读图分析记档 → 目标拿到三视图定稿
 2. **see-through 拆件实测**：拿最接近合格的定稿图先走 ModelScope 在线版（零安装）验证拆件质量，本地 NF4 管线备用
 3. **PSD2Live 绑定**：输入 = see-through 规范命名 PSD → **先审绑定日志（警告即不合格）** → 导出
