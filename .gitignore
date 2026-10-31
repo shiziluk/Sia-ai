@@ -1,5 +1,6 @@
 # Python
 .venv/
+.venv.broken-*/
 __pycache__/
 *.pyc
 .pytest_cache/
@@ -29,6 +30,7 @@ GalgameCharacterSkills/
 # IDE / 系统
 .idea/
 .vscode/
+.screenshots/
 Thumbs.db
 
 # GPT-SoVITS 语音引擎（10GB+ 整合包/解压产物/模型/音频，仅本地，不进 Git）

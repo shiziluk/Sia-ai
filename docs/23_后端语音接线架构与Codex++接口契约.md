@@ -68,17 +68,17 @@ def synthesize(self, *, text, lang, ref_audio, ref_text, gpt_weight, sovits_weig
 
 执行步骤（参考 `docs/20` §api_v2 用法）：
 1. 确保 `api_v2` 服务存活（GET 健康检查；未起则**抛异常**触发降级，不要静默返回空）。
-2. 若 `gpt_weight` 非空：`POST /set_gpt_weights?weights_path=<gpt_weight>`。
-3. 若 `sovits_weight` 非空：`POST /set_sovits_weights?weights_path=<sovits_weight>`。
+2. 若 `gpt_weight` 非空：`GET /set_gpt_weights?weights_path=<gpt_weight>`。
+3. 若 `sovits_weight` 非空：`GET /set_sovits_weights?weights_path=<sovits_weight>`。
 4. `POST /tts` 发送 JSON。**字段名以实际 `api_v2.py` 为准**（包在 gitignored 的 `GPT-SoVITS/` 内），标准字段形如：
    ```json
    {
      "text": "<text>",
      "text_lang": "zh" | "ja",
      "ref_audio_path": "<ref_audio 绝对路径>",
-     "ref_text": "<ref_text>",
-     "ref_lang": "zh" | "ja",
-     "top_p": 0.7, "temperature": 0.7, "speed": 1.0
+     "prompt_text": "<ref_text>",
+     "prompt_lang": "zh" | "ja",
+     "top_p": 0.7, "temperature": 0.7, "speed_factor": 1.0
    }
    ```
 5. 取回音频（api_v2 通常返回 wav）→ **转 mp3**（`ffmpeg` 路径见 `settings.ffmpeg_path`）→ 返回 mp3 字节。
@@ -161,3 +161,24 @@ def synthesize(self, *, text, lang, ref_audio, ref_text, gpt_weight, sovits_weig
 - **api_v2 字段名需核对**：`/tts` 的精确 JSON 字段以实际 `api_v2.py` 为准（包在 gitignored 目录），不要 blindly 信任第 3.1 节的示例。
 - **venv 损坏**：本机 `backend/.venv` 的 python 重定向到 `C:\Users\zhaoq\...`（不存在），需在正确环境重新建 venv 或修复后才能跑后端。
 - **音频格式**：路由 `media_type=audio/mpeg` 固定，推理层务必返回 mp3（wav 需转码）。
+
+---
+
+## 8. Codex++ 落地复核（2026-10-29）
+
+- 已按实际 `api_v2.py` 修正契约：权重接口是 `GET`，TTS 字段是
+  `prompt_text` / `prompt_lang` / `speed_factor`，不是文档早期的
+  `ref_text` / `ref_lang` / `speed`。
+- `api_v2` 的 `media_type` 不支持 mp3，后端请求 wav 后用 ffmpeg 转 mp3。
+- `GptSovitsBackend` 已实现：显式切换 GPT/SoVITS 权重、请求 `/tts`、
+  校验音频响应并转码。
+- 权重切换与合成共用进程级锁，避免并发中/日文请求在全局模型状态上互相污染。
+- 中文显式使用 `s1v3.ckpt` 底模；不能依赖 api_v2 启动时的默认权重。
+- ref、prompt 文本和语气档位改为
+  `backend/config/voice_refs.json`，音频路径相对仓库根目录解析。
+- 当前中低/中档 ref 使用评测集的 `xiaoyi_c1` / `xiaoxiao_a` 语音样本；
+  这是为了保持已验证的 CER/音色基线。产品验收后若要求更强角色原声，
+  应替换 manifest 并重新跑试听与音色相似度评测。
+- FastAPI 响应新增 `X-TTS-Backend: gpt_sovits|edge`，降级不再完全不可见。
+- 验证结果：全量后端测试通过；中文与日文均经真实 `api_v2` 合成出有效 mp3；
+  `/api/voice/tts` 实测返回 `200`、`audio/mpeg`、`X-TTS-Backend: gpt_sovits`。

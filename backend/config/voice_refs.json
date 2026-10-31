@@ -1,0 +1,74 @@
+{
+  "version": 1,
+  "tiers": {
+    "low": {
+      "speed": 0.97,
+      "top_p": 0.65,
+      "temperature": 0.62
+    },
+    "mid": {
+      "speed": 1,
+      "top_p": 0.7,
+      "temperature": 0.72
+    },
+    "high": {
+      "speed": 1.03,
+      "top_p": 0.78,
+      "temperature": 0.82
+    }
+  },
+  "refs": {
+    "zh": {
+      "low": [
+        {
+          "audio": "GPT-SoVITS/_audition/ref_zh/xiaoyi_c1.mp3",
+          "text": "喂，别装傻了！我都看见了，就是你干的吧？",
+          "style": "akuma",
+          "prompt_lang": "zh"
+        }
+      ],
+      "mid": [
+        {
+          "audio": "GPT-SoVITS/_audition/ref_zh/xiaoxiao_a.wav",
+          "text": "哎呀，被你发现了。其实这些话，我一直都想找机会告诉你。",
+          "style": "wenrou",
+          "prompt_lang": "zh"
+        }
+      ],
+      "high": [
+        {
+          "audio": "GPT-SoVITS/_audition/ref_zh/xiaoxiao_a.wav",
+          "text": "哎呀，被你发现了。其实这些话，我一直都想找机会告诉你。",
+          "style": "wenrou",
+          "prompt_lang": "zh"
+        }
+      ]
+    },
+    "ja": {
+      "low": [
+        {
+          "audio": "GPT-SoVITS/_training/wav/z3007_0199.wav",
+          "text": "中途半端なやつ、終わらせるんじゃなかったの？",
+          "style": "akuma",
+          "prompt_lang": "ja"
+        }
+      ],
+      "mid": [
+        {
+          "audio": "GPT-SoVITS/_training/wav/z6005_0012.wav",
+          "text": "昨日の暑さは、全然気にならなかったのに",
+          "style": "wenrou",
+          "prompt_lang": "ja"
+        }
+      ],
+      "high": [
+        {
+          "audio": "GPT-SoVITS/_training/wav/z6005_0012.wav",
+          "text": "昨日の暑さは、全然気にならなかったのに",
+          "style": "wenrou",
+          "prompt_lang": "ja"
+        }
+      ]
+    }
+  }
+}

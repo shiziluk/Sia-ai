@@ -5,6 +5,7 @@ from pydantic_settings import BaseSettings, SettingsConfigDict
 
 # backend\ 目录（.env 与相对路径的基准）
 BACKEND_DIR = Path(__file__).resolve().parent.parent.parent
+PROJECT_ROOT = BACKEND_DIR.parent
 
 
 class Settings(BaseSettings):
@@ -44,13 +45,21 @@ class Settings(BaseSettings):
     tts_backend: str = "gpt_sovits"
     # GPT-SoVITS api_v2 本地 HTTP 服务地址（启动命令见 docs/20 §api_v2 用法）。
     gpt_sovits_api_url: str = "http://127.0.0.1:9880"
-    # 权重路径（来自 gitignored 的 GPT-SoVITS/ 与 RVC/，需本机绝对路径）。
-    # 为空字符串 = 使用 api_v2 启动默认权重（中文底模即此情形）。
-    # TODO(Codex++): 填入实际路径（SoVITS 定型权重 logs/maya_e3.pth；
-    #   日文微调 GPT 如 GPT_weights_v2ProPlus/maya_full-e16 等）。
-    sovits_weight: str = ""
-    gpt_zh_weight: str = ""  # 中文：底模，通常留空用默认
-    gpt_ja_weight: str = ""  # 日文：微调 GPT
+    gpt_sovits_timeout_seconds: float = 180.0
+    voice_ref_manifest: str = "./config/voice_refs.json"
+    # 权重路径相对仓库根目录解析；需要在 .env 中换模型时也可使用绝对路径。
+    sovits_weight: str = (
+        "GPT-SoVITS/GPT-SoVITS-v2pro-20261006/"
+        "SoVITS_weights_v2ProPlus/maya_e3.pth"
+    )
+    gpt_zh_weight: str = (
+        "GPT-SoVITS/GPT-SoVITS-v2pro-20261006/"
+        "GPT_SoVITS/pretrained_models/s1v3.ckpt"
+    )
+    gpt_ja_weight: str = (
+        "GPT-SoVITS/GPT-SoVITS-v2pro-20261006/"
+        "GPT_weights_v2ProPlus/maya-e20.ckpt"
+    )
     # SVC 变声路线（RVC）：音色 sim 裁决未出（训练已暂停），默认关闭。
     svc_enabled: bool = False
 

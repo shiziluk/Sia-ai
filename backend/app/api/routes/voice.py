@@ -31,13 +31,17 @@ def tts(body: TTSRequest, db: Session = Depends(get_db)):
             logger.warning("解析好感度失败，回退档位 1: %s", e)
             intimacy_level = 1
     try:
-        audio = tts_service.text_to_speech(
+        result = tts_service.synthesize_speech(
             body.text, voice=body.voice,
             intimacy_level=intimacy_level, lang=body.lang or "zh",
         )
     except Exception as e:
         raise HTTPException(status_code=502, detail=f"TTS 合成失败: {e}") from e
-    return Response(content=audio, media_type="audio/mpeg")
+    return Response(
+        content=result.audio,
+        media_type="audio/mpeg",
+        headers={"X-TTS-Backend": result.backend},
+    )
 
 
 @router.post("/stt")

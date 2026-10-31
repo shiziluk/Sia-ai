@@ -6,6 +6,7 @@ import pytest
 
 from app.core.config import settings
 from app.providers.llm import LLMError, LLMProvider, OllamaProvider, QwenProvider, get_llm
+from app.services import tts as tts_service
 from app.services import weather
 
 
@@ -313,18 +314,25 @@ def test_reset_affinity(client):
 # 语音路由（外设服务 monkeypatch，不触网）
 # =====================================================================
 def test_tts_ok(client, monkeypatch):
-    monkeypatch.setattr("app.services.tts.text_to_speech", lambda text, voice=None: b"MP3DATA")
+    monkeypatch.setattr(
+        "app.services.tts.synthesize_speech",
+        lambda *args, **kwargs: tts_service.SpeechSynthesisResult(
+            audio=b"MP3DATA",
+            backend="gpt_sovits",
+        ),
+    )
     resp = client.post("/api/voice/tts", json={"text": "哼"})
     assert resp.status_code == 200
     assert resp.content == b"MP3DATA"
     assert resp.headers["content-type"] == "audio/mpeg"
+    assert resp.headers["x-tts-backend"] == "gpt_sovits"
 
 
 def test_tts_failure_502(client, monkeypatch):
-    def boom(text, voice=None):
+    def boom(*args, **kwargs):
         raise RuntimeError("edge-tts 不可用")
 
-    monkeypatch.setattr("app.services.tts.text_to_speech", boom)
+    monkeypatch.setattr("app.services.tts.synthesize_speech", boom)
     resp = client.post("/api/voice/tts", json={"text": "哼"})
     assert resp.status_code == 502
 
