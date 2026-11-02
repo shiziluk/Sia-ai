@@ -3,6 +3,8 @@
 > 调研日期：2026-10-13。目标：让希亚拥有与官方 Haru 同级的真 Live2D 形象（当前前端跑的是官方 Haru 运行时文件占位）。
 > 关联文档：[docs/08_Live2D升级调研与实施清单.md](file:///e:/self_project/Sia-ai/docs/08_Live2D升级调研与实施清单.md)（早期调研）、[docs/12_假Live2D驱动调研与实施清单.md](file:///e:/self_project/Sia-ai/docs/12_假Live2D驱动调研与实施清单.md)、[docs/13_生图全流程自检体系.md](file:///e:/self_project/Sia-ai/docs/13_生图全流程自检体系.md)（三视图底图迭代）。
 
+> **2026-11-01 准入门禁**：真 Live2D 仍需要干净的正面/侧面/背面或至少可补画的单正面 PSD，但现有四视图不能继续用于 see-through 拆件和绑骨。先把“单张正面全身、手可见、双袜完整、服装层级正确”做出来，再讨论 PSD 和 Cubism。首版桌宠先走视频动画路线，见 [docs/25_希亚单正面桌宠立绘路线.md](25_希亚单正面桌宠立绘路线.md)。
+
 ## 一、Haru 模型解剖（本地文件分析结论）
 
 本地 `frontend/public/live2d/haru/` 只有**运行时文件**，没有可编辑源文件：

@@ -1,0 +1,46 @@
+<!doctype html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Sia Face Redraw Experiment</title>
+    <link rel="stylesheet" href="./style.css" />
+  </head>
+  <body>
+    <main class="shell">
+      <section class="stage" id="stage">
+        <canvas id="canvas" width="1152" height="1344"></canvas>
+        <div class="hud" id="hud"></div>
+      </section>
+      <aside class="controls">
+        <h1>Sia Face P0</h1>
+        <label>
+          Mood
+          <select id="mood">
+            <option>neutral</option>
+            <option>happy</option>
+            <option>sad</option>
+            <option>angry</option>
+            <option>anxious</option>
+            <option>sleepy</option>
+            <option>shy</option>
+            <option>surprised</option>
+            <option>tsundere</option>
+          </select>
+        </label>
+        <label>
+          Blink
+          <input id="blink" type="range" min="0" max="1" step="0.01" value="1" />
+        </label>
+        <label>
+          Talk
+          <input id="talk" type="range" min="0" max="1" step="0.01" value="0" />
+        </label>
+        <button id="play-talk" type="button">测试 RMS 口型</button>
+        <button id="toggle-blink" type="button">暂停自动眨眼</button>
+        <p class="note">P0 草稿：验证参数、眨眼、视线和音量口型，不代表正式 Live2D。</p>
+      </aside>
+    </main>
+    <script type="module" src="./face-redraw.js"></script>
+  </body>
+</html>

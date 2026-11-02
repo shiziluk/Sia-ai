@@ -1,0 +1,42 @@
+<!doctype html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Sia Safe Stage P0</title>
+    <link rel="stylesheet" href="./style.css" />
+  </head>
+  <body>
+    <main class="shell">
+      <section class="stage" id="stage">
+        <canvas id="canvas" width="1152" height="1536"></canvas>
+        <div class="hud" id="hud"></div>
+      </section>
+      <aside class="controls">
+        <h1>Sia Safe Stage P0</h1>
+        <label>
+          Mood
+          <select id="mood">
+            <option>neutral</option>
+            <option>happy</option>
+            <option>sad</option>
+            <option>angry</option>
+            <option>anxious</option>
+            <option>sleepy</option>
+            <option>shy</option>
+            <option>surprised</option>
+            <option>tsundere</option>
+          </select>
+        </label>
+        <button id="toggle-motion" type="button">暂停微动效</button>
+        <p class="note">
+          采用当前最符合原设定的成年半身图 `stage-realistic-night`。只验证呼吸、轻微倾斜、指针视差和氛围切换，不拆眼嘴，不冒充正式 Live2D。
+        </p>
+        <p class="note">
+          面部重绘实验已移到 <a href="./face-redraw.html">face-redraw.html</a>，不再作为默认入口。
+        </p>
+      </aside>
+    </main>
+    <script type="module" src="./safe.js"></script>
+  </body>
+</html>
